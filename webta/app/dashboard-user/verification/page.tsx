@@ -1,15 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Clock, ArrowLeft, Briefcase, UserCheck, Store, MapPin, FileText, Upload, Loader2, Save, Trash2, AlertTriangle, CheckCircle2, Mail, Phone, Instagram } from 'lucide-react';
 import Navbar from "@/components/Navbar";
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 
-export default function VerificationPage() {
+function VerificationContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [profile, setProfile] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
   
@@ -31,13 +33,14 @@ export default function VerificationPage() {
   const [submitting, setSubmitting] = useState(false);
   const [canceling, setCanceling] = useState(false);
 
+  const { user: authUser } = useRequireAuth();
+
   useEffect(() => {
     const getData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return router.replace('/login');
-      setUser(user);
+      if (!authUser) return;
+      setUser(authUser);
 
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      const { data } = await supabase.from('profiles').select('*').eq('id', authUser.id).single();
       if (data) {
           setProfile(data);
           // Pre-fill data jika ada
@@ -50,10 +53,18 @@ export default function VerificationPage() {
               contactPhone: data.contact_phone || '',
               instagram: data.instagram || ''
           }));
+
+          // Jika datang dari popup landing page dengan ?upgrade=seller/breeder,
+          // langsung skip ke form upgrade tanpa harus pilih manual
+          const upgradeParam = searchParams.get('upgrade');
+          if (upgradeParam && (upgradeParam === 'seller' || upgradeParam === 'breeder')) {
+            setSelectedRole(upgradeParam);
+            setView('form');
+          }
       }
     };
-    getData();
-  }, [router]);
+    if (authUser) getData();
+  }, [authUser, searchParams]);
 
   // Handle Pilih Role
   const handleSelectRole = (role: string) => {
@@ -189,22 +200,56 @@ export default function VerificationPage() {
         {/* --- LOGIKA TAMPILAN UTAMA --- */}
 
         {/* 1. SUDAH JADI PARTNER (NON-ADMIN) */}
-        {profile.role !== 'user' && profile.role !== 'admin' ? (
-             <div className="bg-white p-8 rounded-2xl border border-green-200 shadow-sm text-center">
+        {profile.role !== 'user' && profile.role !== 'admin' && view === 'selection' ? (
+          <>
+            {/* Jika sudah punya kedua role, tampilkan info saja */}
+            {profile.role === 'seller,breeder' || (profile.role.includes('seller') && profile.role.includes('breeder')) ? (
+              <div className="bg-white p-8 rounded-2xl border border-green-200 shadow-sm text-center">
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                     <CheckCircle2 size={40} className="text-green-600" />
                 </div>
-                <h2 className="text-2xl font-bold text-green-800 mb-2">Selamat!</h2>
+                <h2 className="text-2xl font-bold text-green-800 mb-2">Status Lengkap!</h2>
                 <p className="text-gray-600 mb-6">
-                    Anda sudah resmi terdaftar sebagai <span className="font-bold uppercase text-green-700">{profile.role}</span>.
+                    Anda sudah terdaftar sebagai <span className="font-bold uppercase text-green-700">Seller</span> sekaligus <span className="font-bold uppercase text-green-700">Breeder</span>. Semua fitur kemitraan sudah aktif.
                 </p>
-                <div className="flex justify-center gap-4">
-                    <Link href="/minting" className="inline-block bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700 shadow-lg transition">
-                        Mulai Upload Ikan
-                    </Link>
-                    {/* Opsi Edit Profil Bisnis bisa ditambahkan disini nanti */}
+                <Link href="/minting" className="inline-block bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700 shadow-lg transition">
+                    Mulai Upload Ikan
+                </Link>
+              </div>
+            ) : (
+              /* Jika masih salah satu (seller atau breeder), tampilkan opsi upgrade */
+              <div className="space-y-6">
+                <div className="bg-green-50 border border-green-200 rounded-2xl p-6 flex items-center gap-4">
+                  <CheckCircle2 size={32} className="text-green-600 shrink-0" />
+                  <div>
+                    <p className="font-bold text-green-800">Anda sudah terdaftar sebagai <span className="uppercase">{profile.role}</span></p>
+                    <p className="text-sm text-green-600 mt-0.5">Ingin memperluas akses? Ajukan diri sebagai {profile.role === 'seller' ? 'Breeder' : 'Seller'} di bawah ini.</p>
+                  </div>
                 </div>
-             </div>
+                <div className="grid md:grid-cols-2 gap-6">
+                  {profile.role === 'seller' ? (
+                    <div onClick={() => handleSelectRole('breeder')} className="bg-white border-2 border-gray-200 rounded-2xl p-6 hover:border-blue-500 hover:shadow-lg transition cursor-pointer group flex flex-col justify-between h-full">
+                      <div>
+                        <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-blue-600 transition"><UserCheck className="text-blue-600 w-8 h-8 group-hover:text-white transition" /></div>
+                        <h4 className="font-bold text-xl mb-3 text-gray-900">Upgrade ke Breeder</h4>
+                        <p className="text-sm text-gray-500 mb-6 leading-relaxed">Dapatkan akses menerbitkan <b>Sertifikat Kelahiran</b> dan mengelola sesi pemijahan.</p>
+                      </div>
+                      <button className="w-full py-3 bg-white border-2 border-blue-600 text-blue-600 font-bold rounded-xl hover:bg-blue-600 hover:text-white transition">Ajukan Upgrade</button>
+                    </div>
+                  ) : (
+                    <div onClick={() => handleSelectRole('seller')} className="bg-white border-2 border-gray-200 rounded-2xl p-6 hover:border-purple-500 hover:shadow-lg transition cursor-pointer group flex flex-col justify-between h-full">
+                      <div>
+                        <div className="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-purple-600 transition"><Store className="text-purple-600 w-8 h-8 group-hover:text-white transition" /></div>
+                        <h4 className="font-bold text-xl mb-3 text-gray-900">Upgrade ke Seller</h4>
+                        <p className="text-sm text-gray-500 mb-6 leading-relaxed">Dapatkan akses menjual ikan dan menerbitkan sertifikat kepemilikan baru.</p>
+                      </div>
+                      <button className="w-full py-3 bg-white border-2 border-purple-600 text-purple-600 font-bold rounded-xl hover:bg-purple-600 hover:text-white transition">Ajukan Upgrade</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
 
         /* 2. PENDING REQUEST (NON-ADMIN) */
         ) : profile.requested_role && profile.role !== 'admin' ? (
@@ -368,5 +413,13 @@ export default function VerificationPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function VerificationPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-500">Memuat...</div>}>
+      <VerificationContent />
+    </Suspense>
   );
 }

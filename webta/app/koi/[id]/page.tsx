@@ -3,10 +3,11 @@
 import { useState, useEffect, use } from 'react';
 import { ethers } from 'ethers';
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from '@/lib/contractConfig';
-import { ShieldCheck, Calendar, Ruler, Activity, User, Tag, ArrowLeft, AlertCircle, History, ExternalLink, ImageIcon, X, ZoomIn, GitMerge } from 'lucide-react';
+import { ShieldCheck, Calendar, Ruler, Activity, User, Tag, ArrowLeft, AlertCircle, History, ExternalLink, ImageIcon, X, ZoomIn, GitMerge, Baby, MapPin, Download } from 'lucide-react';
 import Navbar from "@/components/Navbar";
 import Link from 'next/link';
 import QRCode from 'react-qr-code';
+import { supabase } from '@/lib/supabase';
 
 // Helper format tanggal
 const formatDate = (timestamp: any) => {
@@ -36,10 +37,13 @@ export default function KoiDetailPage({ params }: { params: Promise<{ id: string
     const [historyData, setHistoryData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [spawningSession, setSpawningSession] = useState<any>(null);
+    const [walletNames, setWalletNames] = useState<Record<string, string>>({});
 
     // State untuk Modal History & Preview Image
     const [selectedHistory, setSelectedHistory] = useState<any>(null);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [ownerProfile, setOwnerProfile] = useState<any>(null);
 
     useEffect(() => {
         const fetchAllData = async () => {
@@ -47,8 +51,13 @@ export default function KoiDetailPage({ params }: { params: Promise<{ id: string
                 if (!koiId) return;
 
                 // Koneksi Blockchain Read-Only
-                // Menggunakan Localhost Hardhat RPC
-                const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545/");
+                // Coba MetaMask dulu, fallback ke Hardhat localhost
+                let provider: ethers.Provider;
+                if (typeof window !== 'undefined' && window.ethereum) {
+                    provider = new ethers.BrowserProvider(window.ethereum);
+                } else {
+                    provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545/");
+                }
                 const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 
                 // 1. DATA UTAMA
@@ -117,9 +126,57 @@ export default function KoiDetailPage({ params }: { params: Promise<{ id: string
 
                 setKoiData(cleanData);
 
-                // 2. DATA RIWAYAT
-                const history = await contract.getKoiHistory(koiId);
-                setHistoryData([...history].reverse());
+                // 2. DATA RIWAYAT + WALLET LOOKUP
+                const rawHistory = await contract.getKoiHistory(koiId);
+                const histArr = [...rawHistory].reverse();
+                const wallets = [...new Set(histArr.map((h: any) => h.owner?.toLowerCase()).filter(Boolean))] as string[];
+                if (wallets.length > 0) {
+                    const { data: walletData } = await supabase
+                        .from('user_wallets')
+                        .select('wallet_address, profiles(full_name, role)')
+                        .in('wallet_address', wallets);
+                    if (walletData) {
+                        const nameMap: Record<string, string> = {};
+                        walletData.forEach((w: any) => {
+                            if (w.wallet_address && w.profiles) {
+                                nameMap[w.wallet_address.toLowerCase()] = w.profiles.full_name;
+                            }
+                        });
+                        setWalletNames(nameMap);
+
+                        // Cari profil pemilik SAAT INI (currentOwner dari blockchain)
+                        const currentOwnerLower = cleanData.currentOwner?.toLowerCase();
+                        const ownerW = walletData.find((w: any) => w.wallet_address?.toLowerCase() === currentOwnerLower);
+                        
+                        if (ownerW && ownerW.profiles) {
+                            // Supabase join kadang mereturn array jika schema tidak ketat, kita handle keduanya:
+                            const profData = Array.isArray(ownerW.profiles) ? ownerW.profiles[0] : ownerW.profiles;
+                            if (profData) {
+                                setOwnerProfile({
+                                    full_name: profData.full_name,
+                                    role: profData.role
+                                });
+                            }
+                        }
+                    }
+                }
+                setHistoryData(histArr);
+
+                // 3. FETCH SPAWNING SESSION dari Supabase
+                // Format ID anakan: KOI-YYYY-XXXX-NNN → session_code: SPAWN-YYYY-XXXX
+                const parts = koiId.split('-');
+                if (parts.length >= 4 && parts[0] === 'KOI') {
+                    const sessionCode = `SPAWN-${parts[1]}-${parts[2]}`;
+                    const { data: sessionData, error: sessionErr } = await supabase
+                        .from('spawning_sessions')
+                        .select('*, spawning_fathers(father_koi_id), profiles(full_name)')
+                        .eq('session_code', sessionCode)
+                        .maybeSingle();
+                        
+                    if (sessionData && !sessionErr) {
+                        setSpawningSession(sessionData);
+                    }
+                }
 
             } catch (err: any) {
                 console.error("Fetch Error:", err);
@@ -137,6 +194,20 @@ export default function KoiDetailPage({ params }: { params: Promise<{ id: string
         fetchAllData();
     }, [koiId]);
 
+    const downloadQRCode = () => {
+        const svg = document.getElementById("QRCode");
+        if (!svg) return;
+        const svgData = new XMLSerializer().serializeToString(svg);
+        const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const downloadLink = document.createElement("a");
+        downloadLink.href = url;
+        downloadLink.download = `QR-${koiId}.svg`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+    };
+
     if (loading) return (
         <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white flex-col gap-4">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500"></div>
@@ -145,21 +216,23 @@ export default function KoiDetailPage({ params }: { params: Promise<{ id: string
     );
 
     if (error) return (
-        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 font-sans">
+        <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
             <Navbar />
-            <div className="mt-10 bg-white p-10 rounded-3xl shadow-xl text-center max-w-md border border-red-100">
-                <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <AlertCircle size={32} />
-                </div>
-                <h2 className="text-xl font-bold text-gray-900 mb-2">Gagal Verifikasi</h2>
-                <p className="text-gray-500 mb-6">{error}</p>
-                <div className="flex flex-col gap-3">
-                    <Link href="/check" className="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-gray-800 transition block">
-                        Cari ID Lain
-                    </Link>
-                    <Link href="/" className="text-gray-500 hover:text-orange-600 text-sm font-medium">
-                        Kembali ke Beranda
-                    </Link>
+            <div className="flex-grow flex flex-col items-center justify-center p-4">
+                <div className="bg-white p-10 rounded-3xl shadow-xl text-center max-w-md border border-red-100">
+                    <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <AlertCircle size={32} />
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-900 mb-2">Gagal Verifikasi</h2>
+                    <p className="text-gray-500 mb-6">{error}</p>
+                    <div className="flex flex-col gap-3">
+                        <Link href="/check" className="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-gray-800 transition block">
+                            Cari ID Lain
+                        </Link>
+                        <Link href="/" className="text-gray-500 hover:text-orange-600 text-sm font-medium">
+                            Kembali ke Beranda
+                        </Link>
+                    </div>
                 </div>
             </div>
         </div>
@@ -196,8 +269,18 @@ export default function KoiDetailPage({ params }: { params: Promise<{ id: string
                                 <div className="w-full h-full flex items-center justify-center text-gray-400">No Image</div>
                             )}
                         </div>
-                        <div className="absolute bottom-6 left-6 bg-white p-3 rounded-2xl shadow-xl border border-gray-100">
-                            <QRCode value={typeof window !== 'undefined' ? window.location.href : ''} size={80} />
+                        <div className="absolute bottom-6 left-6 bg-white p-3 rounded-2xl shadow-xl border border-gray-100 group/qr">
+                            <QRCode id="QRCode" value={typeof window !== 'undefined' ? window.location.href : ''} size={80} />
+                            
+                            {/* Tombol Download QR (Muncul saat di-hover) */}
+                            <button 
+                                onClick={downloadQRCode}
+                                className="absolute inset-0 bg-black/60 rounded-2xl flex flex-col items-center justify-center text-white opacity-0 group-hover/qr:opacity-100 transition-opacity duration-300"
+                                title="Download QR Code (SVG High-Res)"
+                            >
+                                <Download size={24} className="mb-1" />
+                                <span className="text-[10px] font-bold uppercase tracking-wider">Simpan</span>
+                            </button>
                         </div>
                     </div>
 
@@ -209,6 +292,30 @@ export default function KoiDetailPage({ params }: { params: Promise<{ id: string
                                 <p className="text-xl text-gray-500 font-mono tracking-wide">{koiData.id}</p>
                             </div>
                         </div>
+
+                        {/* Pemilik Terkini */}
+                        {ownerProfile && (
+                            <div className="mb-6 bg-gray-50 rounded-2xl border border-gray-100 px-5 py-4 flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                                    <User size={20} className="text-orange-600" />
+                                </div>
+                                <div className="flex-grow min-w-0">
+                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Pemilik Terkini</p>
+                                    <p className="font-bold text-gray-900 text-base truncate">{ownerProfile.full_name}</p>
+                                </div>
+                                <div className="flex gap-1.5 shrink-0 flex-wrap justify-end">
+                                    {ownerProfile.role?.includes('seller') && (
+                                        <span className="bg-purple-100 text-purple-700 text-[10px] font-black px-2.5 py-1 rounded-full uppercase border border-purple-200">Seller</span>
+                                    )}
+                                    {ownerProfile.role?.includes('breeder') && (
+                                        <span className="bg-blue-100 text-blue-700 text-[10px] font-black px-2.5 py-1 rounded-full uppercase border border-blue-200">Breeder</span>
+                                    )}
+                                    {!ownerProfile.role?.includes('seller') && !ownerProfile.role?.includes('breeder') && (
+                                        <span className="bg-gray-100 text-gray-500 text-[10px] font-black px-2.5 py-1 rounded-full uppercase border border-gray-200">{ownerProfile.role}</span>
+                                    )}
+                                </div>
+                            </div>
+                        )}
 
                         <div className="grid grid-cols-2 gap-y-8 gap-x-4 flex-grow mb-8">
                             <div><p className="text-xs text-gray-400 uppercase font-bold mb-1"><User size={12} /> Breeder</p><p className="text-lg font-semibold text-gray-900">{koiData.breeder}</p></div>
@@ -263,22 +370,80 @@ export default function KoiDetailPage({ params }: { params: Promise<{ id: string
                 </div>
 
                 {/* --- SILSILAH (LINEAGE) --- */}
-                {(koiData.fatherId || koiData.motherId) && (
-                    <div className="bg-orange-50 rounded-2xl border border-orange-100 p-8 mb-12">
-                        <h3 className="text-xl font-bold text-orange-900 mb-6 flex items-center gap-2"><GitMerge /> Silsilah Keluarga (Lineage)</h3>
-                        <div className="grid md:grid-cols-2 gap-6">
-                            {koiData.fatherId && (
-                                <Link href={`/koi/${koiData.fatherId}`} className="bg-white p-4 rounded-xl border border-orange-200 hover:shadow-md transition flex items-center justify-between group">
-                                    <div><p className="text-xs font-bold text-orange-400 uppercase">Indukan Jantan (Bapak)</p><p className="font-mono text-lg font-bold text-gray-800">{koiData.fatherId}</p></div>
-                                    <ArrowLeft className="rotate-180 text-orange-300 group-hover:text-orange-600 transition" />
+                {(koiData.fatherId || koiData.motherId || spawningSession) && (
+                    <div className="bg-orange-50 rounded-2xl border border-orange-100 p-8 mb-8">
+                        <h3 className="text-xl font-bold text-orange-900 mb-6 flex items-center gap-2">
+                            <GitMerge /> Silsilah Keluarga (Lineage)
+                        </h3>
+
+                        {/* Info Sesi Pemijahan */}
+                        {spawningSession && (
+                            <div className="bg-white rounded-xl border border-orange-200 p-4 mb-5 flex flex-wrap gap-4 items-center">
+                                <div className="flex items-center gap-2">
+                                    <Baby size={16} className="text-orange-500" />
+                                    <span className="text-xs font-bold text-gray-500 uppercase">Sesi Pemijahan</span>
+                                    <span className="font-mono font-black text-orange-600">{spawningSession.session_code}</span>
+                                </div>
+                                {spawningSession.profiles?.full_name && (
+                                    <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                                        <User size={13} className="text-blue-400" />
+                                        <span className="font-bold">{spawningSession.profiles.full_name}</span>
+                                        <span className="text-gray-400">(Breeder)</span>
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                                    <Calendar size={13} className="text-orange-400" />
+                                    {new Date(spawningSession.spawn_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                </div>
+                                {spawningSession.location && (
+                                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                                        <MapPin size={13} className="text-red-400" /> {spawningSession.location}
+                                    </div>
+                                )}
+                                {spawningSession.notes && (
+                                    <p className="w-full text-xs italic text-gray-400">📝 {spawningSession.notes}</p>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="grid md:grid-cols-2 gap-4">
+                            {/* Induk Betina (Ibu) */}
+                            {(koiData.motherId || spawningSession?.mother_koi_id) && (
+                                <Link href={`/koi/${koiData.motherId || spawningSession.mother_koi_id}`}
+                                    className="bg-white p-4 rounded-xl border border-pink-200 hover:shadow-md transition flex items-center justify-between group">
+                                    <div>
+                                        <p className="text-xs font-bold text-pink-400 uppercase mb-0.5">Indukan Betina (Ibu)</p>
+                                        <p className="font-mono text-lg font-bold text-gray-800">{koiData.motherId || spawningSession.mother_koi_id}</p>
+                                    </div>
+                                    <ArrowLeft className="rotate-180 text-pink-300 group-hover:text-pink-600 transition" />
                                 </Link>
                             )}
-                            {koiData.motherId && (
-                                <Link href={`/koi/${koiData.motherId}`} className="bg-white p-4 rounded-xl border border-orange-200 hover:shadow-md transition flex items-center justify-between group">
-                                    <div><p className="text-xs font-bold text-orange-400 uppercase">Indukan Betina (Ibu)</p><p className="font-mono text-lg font-bold text-gray-800">{koiData.motherId}</p></div>
-                                    <ArrowLeft className="rotate-180 text-orange-300 group-hover:text-orange-600 transition" />
-                                </Link>
-                            )}
+
+                            {/* Multi Induk Jantan (Ayah) dari spawning session */}
+                            {spawningSession?.spawning_fathers?.length > 0 ? (
+                                <div className="space-y-2">
+                                    <p className="text-xs font-bold text-blue-400 uppercase mb-1">Indukan Jantan (Ayah)</p>
+                                    {spawningSession.spawning_fathers.map((f: any) => (
+                                        <Link key={f.father_koi_id} href={`/koi/${f.father_koi_id}`}
+                                            className="bg-white p-3 rounded-xl border border-blue-200 hover:shadow-md transition flex items-center justify-between group block">
+                                            <p className="font-mono font-bold text-gray-800">{f.father_koi_id}</p>
+                                            <ArrowLeft className="rotate-180 text-blue-300 group-hover:text-blue-600 transition" />
+                                        </Link>
+                                    ))}
+                                </div>
+                            ) : !spawningSession && koiData.fatherId ? (
+                                // Fallback: hanya jika bukan dari spawning session
+                                koiData.fatherId.split(',').filter(Boolean).map((fid: string) => (
+                                    <Link key={fid.trim()} href={`/koi/${fid.trim()}`}
+                                        className="bg-white p-4 rounded-xl border border-blue-200 hover:shadow-md transition flex items-center justify-between group">
+                                        <div>
+                                            <p className="text-xs font-bold text-blue-400 uppercase mb-0.5">Indukan Jantan (Ayah)</p>
+                                            <p className="font-mono text-lg font-bold text-gray-800">{fid.trim()}</p>
+                                        </div>
+                                        <ArrowLeft className="rotate-180 text-blue-300 group-hover:text-blue-600 transition" />
+                                    </Link>
+                                ))
+                            ) : null}
                         </div>
                     </div>
                 )}
@@ -327,7 +492,9 @@ export default function KoiDetailPage({ params }: { params: Promise<{ id: string
                                     {/* DETAIL PEMILIK DI CARD */}
                                     <div className="flex items-center gap-2 text-xs text-gray-500 border-t border-gray-50 pt-2 mt-3">
                                         <User size={12} />
-                                        <span className="font-bold text-gray-800">{item.ownerName || "Tidak Diketahui"}</span>
+                                        <span className="font-bold text-gray-800">
+                                            {walletNames[item.owner?.toLowerCase()] || item.ownerName || 'Tidak Diketahui'}
+                                        </span>
                                         <span className="font-mono text-gray-400 text-[10px] ml-1 truncate max-w-[100px]">{item.owner}</span>
                                     </div>
                                 </div>

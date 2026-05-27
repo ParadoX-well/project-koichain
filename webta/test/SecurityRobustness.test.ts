@@ -5,11 +5,11 @@ const { ethers } = hre;
 
 /**
  * EKSPERIMEN KEAMANAN BLOCKCHAIN KOMPREHENSIF (IEEE STANDARD)
- * Skenario: Simulasi Penetrasi (Pen-Test) pada Smart Contract WebKoi.
+ * Skenario: Simulasi Penetrasi (Pen-Test) pada Smart Contract KoiChain ID.
  * Metodologi: Negative Testing untuk memvalidasi Integritas dan Kontrol Akses.
  */
 
-describe("Security Robustness Analysis: WebKoi", function () {
+describe("Security Robustness Analysis: KoiChain ID", function () {
     let koiCert: any;
     let owner: any;         // Wallet A (Pemilik Sah)
     let hacker: any;        // Wallet B (Penyerang)

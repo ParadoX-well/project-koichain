@@ -3,7 +3,7 @@ import hre from "hardhat";
 
 const { ethers } = hre;
 
-describe("Eksperimen 5: Perbandingan Efisiensi WebKoi vs ERC-721", function () {
+describe("Eksperimen 5: Perbandingan Efisiensi KoiChain ID vs ERC-721", function () {
     let koiCert: any;
     let erc721Koi: any;
     let owner: any;
@@ -28,13 +28,13 @@ describe("Eksperimen 5: Perbandingan Efisiensi WebKoi vs ERC-721", function () {
         const receipt1 = await tx1.wait();
         console.log(`   [Baseline] ERC-721 safeMint   : ${receipt1.gasUsed} gas`);
 
-        // Minting WebKoi (Data Kompleks)
+        // Minting KoiChain ID (Data Kompleks)
         const tx2 = await koiCert.mintCertificate(
             "COMP-001", "Kohaku", "Farm X", "Jantan", "Tosai", 30, "OK",
             "https://supabase.com/photo.jpg", "", "", "", ""
         );
         const receipt2 = await tx2.wait();
-        console.log(`   [Proposed] WebKoi mintCert    : ${receipt2.gasUsed} gas`);
+        console.log(`   [Proposed] KoiChain ID mintCert    : ${receipt2.gasUsed} gas`);
 
         /**
          * CATATAN UNTUK PAPER:

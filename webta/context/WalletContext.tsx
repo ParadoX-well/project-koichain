@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import toast from 'react-hot-toast';
+import { supabase } from '@/lib/supabase';
 
 // Solusi TypeScript untuk window.ethereum
 declare global {
@@ -11,19 +12,23 @@ declare global {
 }
 
 // --- CONFIG ADMIN ---
-// Daftar wallet ini OTOMATIS dianggap sebagai Admin
 const ADMIN_WALLETS = [
-  "0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199", // Akun Hardhat #19
-  "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-  "0x59f778dF00c354742fAc5992737218C5A023b69b", // Wallet Asli Kamu
-  // Tambahkan wallet lain di sini jika perlu
+  "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",  // Akun Hardhat
+  "0x59f778dF00c354742fAc5992737218C5A023b69b", // Wallet Asli
 ].map(addr => addr.toLowerCase());
+
+interface WalletConflictInfo {
+  address: string;
+  ownerUserId: string;
+}
 
 interface WalletContextType {
   account: string | null;
-  connectWallet: () => Promise<void>;
+  connectWallet: (forceNew?: boolean) => Promise<void>;
   disconnectWallet: () => void;
   isAdmin: boolean;
+  walletConflict: WalletConflictInfo | null;
+  resolveConflict: (action: 'cancel' | 'reconnect') => void;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -31,18 +36,42 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
 export function WalletProvider({ children }: { children: ReactNode }) {
   const [account, setAccount] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [walletConflict, setWalletConflict] = useState<WalletConflictInfo | null>(null);
 
   // Helper untuk set akun dan cek admin
   const handleSetAccount = (address: string) => {
     const lowerAddr = address.toLowerCase();
     setAccount(lowerAddr);
+    setIsAdmin(ADMIN_WALLETS.includes(lowerAddr));
+  };
 
-    // Cek apakah wallet ini ada di daftar admin
-    if (ADMIN_WALLETS.includes(lowerAddr)) {
-      setIsAdmin(true);
-    } else {
-      setIsAdmin(false); // Bukan admin, tapi TETAP BOLEH CONNECT (untuk Breeder/Seller)
+  /**
+   * Validasi wallet ke database.
+   * Jika wallet sudah dipakai akun LAIN, set walletConflict (tampilkan modal)
+   * dan return false. Jika clear, set account dan return true.
+   */
+  const validateAndSetAccount = async (address: string, silent = false): Promise<boolean> => {
+    const lowerAddr = address.toLowerCase();
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      const { data: owner } = await supabase
+        .from('user_wallets')
+        .select('user_id')
+        .eq('wallet_address', lowerAddr)
+        .maybeSingle();
+
+      if (owner && owner.user_id !== session.user.id) {
+        // Wallet milik orang lain — tampilkan modal konfirmasi
+        setWalletConflict({ address: lowerAddr, ownerUserId: owner.user_id });
+        setAccount(null);
+        setIsAdmin(false);
+        return false;
+      }
     }
+
+    handleSetAccount(lowerAddr);
+    return true;
   };
 
   // Cek koneksi saat refresh halaman
@@ -50,59 +79,113 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     const checkConnection = async () => {
       if (typeof window !== 'undefined' && window.ethereum) {
         try {
+          // eth_accounts = TIDAK meminta permission, hanya cek yang sudah ada
           const accounts = await window.ethereum.request({ method: 'eth_accounts' });
           if (accounts.length > 0) {
-            handleSetAccount(accounts[0]);
+            await validateAndSetAccount(accounts[0], true);
           }
         } catch (error) {
-          console.error("Gagal cek koneksi:", error);
+          console.error("Gagal cek koneksi wallet:", error);
         }
       }
     };
 
     checkConnection();
 
-    // Listener jika user ganti akun di Metamask
+    // Re-validasi saat sesi auth berubah (login/logout)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
+      if (event === 'SIGNED_OUT') {
+        setAccount(null);
+        setIsAdmin(false);
+        setWalletConflict(null);
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        // Re-check wallet setelah login
+        if (typeof window !== 'undefined' && window.ethereum) {
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          if (accounts.length > 0) {
+            await validateAndSetAccount(accounts[0], true);
+          }
+        }
+      }
+    });
+
+    // Listener jika user ganti akun di MetaMask
     if (typeof window !== 'undefined' && window.ethereum) {
-      window.ethereum.on('accountsChanged', (accounts: string[]) => {
+      const handleAccountsChanged = async (accounts: string[]) => {
         if (accounts.length > 0) {
-          handleSetAccount(accounts[0]);
-          toast.success("Akun Wallet Diganti");
+          const success = await validateAndSetAccount(accounts[0]);
+          if (success) toast.success("Akun Wallet Diganti");
         } else {
           setAccount(null);
           setIsAdmin(false);
-          toast.success("Wallet Disconnected");
+          toast("Wallet Disconnected", { icon: "👋" });
         }
-      });
+      };
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
+      return () => {
+        subscription.unsubscribe();
+        window.ethereum?.removeListener?.('accountsChanged', handleAccountsChanged);
+      };
     }
+
+    return () => { subscription.unsubscribe(); };
   }, []);
 
-  const connectWallet = async () => {
-    if (typeof window !== 'undefined' && window.ethereum) {
-      try {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        const walletAddress = accounts[0];
+  /**
+   * connectWallet:
+   * - forceNew=true  → pakai wallet_requestPermissions agar MetaMask minta pilih akun baru
+   * - forceNew=false → pakai eth_requestAccounts (cukup untuk sebagian besar kasus)
+   */
+  const connectWallet = async (forceNew = false) => {
+    if (typeof window === 'undefined' || !window.ethereum) {
+      toast.error("MetaMask tidak terdeteksi! Silakan install MetaMask.");
+      return;
+    }
 
-        // --- PERUBAHAN UTAMA DI SINI ---
-        // Dulu: Jika bukan admin -> Error/Tolak
-        // Sekarang: Semua boleh masuk, nanti diatur hak aksesnya lewat role
+    try {
+      let accounts: string[];
 
-        handleSetAccount(walletAddress);
-        toast.success("Wallet Terhubung!");
+      if (forceNew) {
+        // Minta MetaMask buka dialog pilih akun dari awal
+        await window.ethereum.request({
+          method: 'wallet_requestPermissions',
+          params: [{ eth_accounts: {} }],
+        });
+      }
 
-      } catch (err) {
+      accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const walletAddress = accounts[0];
+
+      const success = await validateAndSetAccount(walletAddress);
+      if (success) toast.success("Wallet Terhubung!");
+
+    } catch (err: any) {
+      if (err.code === 4001) {
+        toast.error("Koneksi dibatalkan oleh pengguna.");
+      } else {
         console.error(err);
         toast.error("Gagal menghubungkan wallet.");
       }
-    } else {
-      toast.error("Metamask tidak terdeteksi! Silakan install.");
     }
   };
 
   const disconnectWallet = () => {
     setAccount(null);
     setIsAdmin(false);
-    toast.success("Wallet Terputus");
+    toast("Wallet Terputus", { icon: "👋" });
+  };
+
+  /**
+   * resolveConflict:
+   * - 'cancel'     → tutup modal, tidak connect
+   * - 'reconnect'  → tutup modal, buka MetaMask untuk pilih wallet lain
+   */
+  const resolveConflict = async (action: 'cancel' | 'reconnect') => {
+    setWalletConflict(null);
+    if (action === 'reconnect') {
+      // Delay sedikit agar modal tutup dulu secara visual
+      setTimeout(() => connectWallet(true), 150);
+    }
   };
 
   return (
@@ -110,7 +193,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       account,
       connectWallet,
       disconnectWallet,
-      isAdmin // Flag ini bisa dipakai untuk proteksi tombol khusus admin
+      isAdmin,
+      walletConflict,
+      resolveConflict,
     }}>
       {children}
     </WalletContext.Provider>

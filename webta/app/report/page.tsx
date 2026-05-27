@@ -22,13 +22,18 @@ export default function ReportPage() {
 
   // Auto-fill jika user sudah login
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user && user.email) {
-        setFormData(prev => ({ ...prev, contactInfo: user.email! }));
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.email) {
+        setFormData(prev => ({ ...prev, contactInfo: session.user.email! }));
       }
-    };
-    checkUser();
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user?.email) {
+        setFormData(prev => ({ ...prev, contactInfo: session.user.email! }));
+      }
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   // Upload Bukti ke Storage
@@ -97,7 +102,7 @@ export default function ReportPage() {
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Laporan Diterima</h1>
             <p className="text-gray-500 mb-8">
-              Terima kasih telah membantu menjaga keamanan komunitas WebKoi. Tim kami akan meninjau laporan Anda dan menghubungi melalui kontak yang diberikan.
+              Terima kasih telah membantu menjaga keamanan komunitas KoiChain ID. Tim kami akan meninjau laporan Anda dan menghubungi melalui kontak yang diberikan.
             </p>
             <button 
               onClick={() => window.location.reload()} 
@@ -122,7 +127,7 @@ export default function ReportPage() {
         <div className="text-center mb-10">
           <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Pusat Bantuan & Laporan</h1>
           <p className="text-gray-500 max-w-xl mx-auto">
-            Temukan bug? Menemukan indikasi penipuan? Atau punya saran fitur? Sampaikan kepada kami agar WebKoi menjadi lebih baik.
+            Temukan bug? Menemukan indikasi penipuan? Atau punya saran fitur? Sampaikan kepada kami agar KoiChain ID menjadi lebih baik.
           </p>
         </div>
 

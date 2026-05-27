@@ -9,20 +9,20 @@ export default function Footer() {
       {/* Bagian Utama Footer */}
       <div className="container mx-auto px-6 py-12 lg:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
-          
+
           {/* Kolom 1: Brand & Deskripsi */}
           <div className="space-y-6">
             <div className="flex items-center gap-3">
               {/* LOGO PERUSAHAAN (Tanpa Kotak) */}
-              <img 
-                src="/logokoi.png" 
-                alt="Logo WebKoi" 
-                className="w-8 h-8 object-contain filter brightness-0 invert" 
+              <img
+                src="/logo-koichain2-notulisan-black.png"
+                alt="Logo KoiChain ID"
+                className="w-10 h-10 object-contain filter brightness-0 invert"
               />
-              <span className="text-2xl font-bold text-white tracking-tight">WebKoi</span>
+              <span className="text-2xl font-bold text-white tracking-tight">KoiChain ID</span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Platform sertifikasi digital terpercaya untuk ikan Koi juara. 
+              Platform sertifikasi digital terpercaya untuk ikan Koi juara.
               Menjamin keaslian dan transparansi sejarah kepemilikan menggunakan teknologi Blockchain Ethereum.
             </p>
             <div className="flex gap-4 pt-2">
@@ -109,28 +109,28 @@ export default function Footer() {
                 <div className="p-2 bg-gray-800 rounded-lg text-orange-500 shrink-0">
                   <MapPin size={18} />
                 </div>
-                <span className="leading-relaxed">Jl. Koi Juara No. 123, <br/>Kota Serang, Banten 42111</span>
+                <span className="leading-relaxed">Jalan Telekomunikasi No. 1, Terusan Buahbatu, <br />Bojongsoang, Bandung, Jawa Barat, 40257</span>
               </li>
               <li className="flex items-center gap-4">
                 <div className="p-2 bg-gray-800 rounded-lg text-orange-500 shrink-0">
                   <Phone size={18} />
                 </div>
-                <span>(0254) 123 4567</span>
+                <span>+62 895 123 4567</span>
               </li>
               <li className="flex items-center gap-4">
-                 <div className="p-2 bg-gray-800 rounded-lg text-orange-500 shrink-0">
+                <div className="p-2 bg-gray-800 rounded-lg text-orange-500 shrink-0">
                   <Mail size={18} />
                 </div>
-                <a href="mailto:info@webkoi.com" className="hover:text-orange-500 transition-colors">info@webkoi.com</a>
+                <a href="mailto:info@koichain.id" className="hover:text-orange-500 transition-colors">info@koichain.id</a>
               </li>
-              
+
               {/* ITEM KE-4: FORMULIR PENGADUAN (Dengan Icon) */}
               <li className="flex items-center gap-4">
-                 <div className="p-2 bg-gray-800 rounded-lg text-orange-500 shrink-0">
+                <div className="p-2 bg-gray-800 rounded-lg text-orange-500 shrink-0">
                   <FileText size={18} />
                 </div>
                 <Link href="/report" className="hover:text-orange-500 transition-colors">
-                    Formulir Pengaduan
+                  Formulir Pengaduan
                 </Link>
               </li>
 
@@ -143,7 +143,7 @@ export default function Footer() {
       {/* Bagian Copyright */}
       <div className="border-t border-gray-800 bg-gray-950">
         <div className="container mx-auto px-6 py-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500">
-          <p>&copy; {currentYear} WebKoi. Dibuat oleh <span className="text-gray-400 font-medium">Andika Attar Fizrah</span>.</p>
+          <p>&copy; {currentYear} KoiChain ID. Dibuat oleh <span className="text-gray-400 font-medium">Andika Attar Fizrah</span>.</p>
           <div className="flex gap-6">
             <Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
             <Link href="/terms-of-service" className="hover:text-white transition-colors">Terms of Service</Link>

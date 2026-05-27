@@ -28,7 +28,7 @@ export default function CookiePolicy() {
               <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <Settings className="text-orange-600 w-5 h-5" /> 2. Cookie yang Kami Gunakan
               </h2>
-              <p className="mb-2">WebKoi menggunakan jenis cookie berikut:</p>
+              <p className="mb-2">KoiChain ID menggunakan jenis cookie berikut:</p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>
                   <strong>Cookie Esensial (Wajib):</strong> Cookie ini sangat penting agar website dapat berfungsi dengan baik. Contohnya: Cookie sesi dari Supabase yang menjaga Anda tetap login saat berpindah halaman. Tanpa cookie ini, fitur login tidak dapat digunakan.
@@ -47,7 +47,7 @@ export default function CookiePolicy() {
                 <Shield className="text-orange-600 w-5 h-5" /> 3. Mengelola Cookie
               </h2>
               <p>
-                Sebagian besar browser secara otomatis menerima cookie, tetapi Anda dapat mengubah pengaturan browser Anda untuk menolak cookie jika diinginkan. Harap dicatat bahwa jika Anda menonaktifkan cookie esensial, beberapa bagian dari WebKoi (terutama Login dan Dashboard) mungkin tidak berfungsi dengan semestinya.
+                Sebagian besar browser secara otomatis menerima cookie, tetapi Anda dapat mengubah pengaturan browser Anda untuk menolak cookie jika diinginkan. Harap dicatat bahwa jika Anda menonaktifkan cookie esensial, beberapa bagian dari KoiChain ID (terutama Login dan Dashboard) mungkin tidak berfungsi dengan semestinya.
               </p>
             </section>
           </div>

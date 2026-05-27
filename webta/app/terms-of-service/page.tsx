@@ -20,7 +20,7 @@ export default function TermsOfService() {
                 <FileText className="text-orange-600 w-5 h-5" /> 1. Pendahuluan
               </h2>
               <p>
-                Selamat datang di WebKoi. Dengan mengakses atau menggunakan platform ini, Anda setuju untuk terikat oleh syarat dan ketentuan berikut. Platform ini dikembangkan sebagai purwarupa (prototype) untuk keperluan Tugas Akhir Akademik.
+                Selamat datang di KoiChain ID. Dengan mengakses atau menggunakan platform ini, Anda setuju untuk terikat oleh syarat dan ketentuan berikut. Platform ini dikembangkan sebagai purwarupa (prototype) untuk keperluan Tugas Akhir Akademik.
               </p>
             </section>
 
@@ -45,7 +45,7 @@ export default function TermsOfService() {
               <ul className="list-disc pl-6 space-y-2 mt-2">
                 <li>Anda menjamin bahwa data (foto, ukuran, jenis) adalah akurat dan benar.</li>
                 <li>Dilarang mengunggah konten yang melanggar hak cipta, bersifat penipuan, atau ilegal.</li>
-                <li>WebKoi berhak menonaktifkan akses akun yang terbukti melakukan pemalsuan data sertifikat.</li>
+                <li>KoiChain ID berhak menonaktifkan akses akun yang terbukti melakukan pemalsuan data sertifikat.</li>
               </ul>
             </section>
 
@@ -54,7 +54,7 @@ export default function TermsOfService() {
                 <Scale className="text-orange-600 w-5 h-5" /> 4. Batasan Tanggung Jawab
               </h2>
               <p>
-                WebKoi disediakan "sebagaimana adanya" (as is). Sebagai proyek akademik, kami tidak menjamin ketersediaan layanan 24/7 atau bebas dari kesalahan (bug). Kami tidak bertanggung jawab atas kerugian finansial yang mungkin timbul akibat penggunaan platform ini, termasuk fluktuasi nilai aset atau kesalahan transaksi pengguna.
+                KoiChain ID disediakan "sebagaimana adanya" (as is). Sebagai proyek akademik, kami tidak menjamin ketersediaan layanan 24/7 atau bebas dari kesalahan (bug). Kami tidak bertanggung jawab atas kerugian finansial yang mungkin timbul akibat penggunaan platform ini, termasuk fluktuasi nilai aset atau kesalahan transaksi pengguna.
               </p>
             </section>
           </div>

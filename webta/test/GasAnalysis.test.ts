@@ -3,7 +3,7 @@ import hre from "hardhat";
 
 const { ethers } = hre;
 
-describe("IEEE Paper Experiments: WebKoi Comprehensive Analysis", function () {
+describe("IEEE Paper Experiments: KoiChain ID Comprehensive Analysis", function () {
     let koiCert: any;
     let erc721Koi: any;
     let owner: any;
@@ -20,7 +20,7 @@ describe("IEEE Paper Experiments: WebKoi Comprehensive Analysis", function () {
         // Inisialisasi akun pengujian
         [owner, addr1, addr2, hacker] = await ethers.getSigners();
 
-        // 1. Deploy Smart Contract WebKoi (Sistem yang diusulkan)
+        // 1. Deploy Smart Contract KoiChain ID (Sistem yang diusulkan)
         const KoiCert = await ethers.getContractFactory("KoiCert");
         koiCert = await KoiCert.deploy();
 
@@ -28,7 +28,7 @@ describe("IEEE Paper Experiments: WebKoi Comprehensive Analysis", function () {
         const ERC721Koi = await ethers.getContractFactory("ERC721Koi");
         erc721Koi = await ERC721Koi.deploy();
 
-        console.log("   --- Memulai Eksperimen Kuantitatif WebKoi ---");
+        console.log("   --- Memulai Eksperimen Kuantitatif KoiChain ID ---");
     });
 
     describe("Eksperimen 1: Analisis Gas Minting (Pencatatan Awal)", function () {

@@ -22,7 +22,7 @@ def plot_gas_comparison():
     Grafik 1: Gas Consumption per Smart Contract Function
     Membandingkan biaya komputasi antar fungsi.
     """
-    functions = ['ERC721 (Base)', 'Transfer', 'Update', 'Mint (WebKoi)']
+    functions = ['ERC721 (Base)', 'Transfer', 'Update', 'Mint (KoiChain ID)']
     # Data berdasarkan hasil eksperimen riil Anda
     gas_values = [57141, 239041, 263623, 463104]
     

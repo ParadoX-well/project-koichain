@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useWallet } from '@/context/WalletContext';
 import { supabase } from '@/lib/supabase';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from '@/lib/contractConfig';
 import { ethers } from 'ethers';
 import { Upload, Save, Loader2, ArrowLeft, Ruler, Calendar, Activity, FileText, Search, Ban } from 'lucide-react';
@@ -34,32 +35,37 @@ export default function UpdateKoiPage() {
     contest: null
   });
 
-  // CEK AKSES & BAN
-  useEffect(() => {
-    const checkAccess = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) { router.replace('/login'); return; }
+  const { user: authUser, loading: authLoading } = useRequireAuth();
 
-        const { data: profile } = await supabase.from('profiles').select('role, is_banned').eq('id', user.id).single();
-        if (profile) {
-            if (profile.is_banned) {
-                setIsBanned(true);
-                setPageLoading(false);
-                return;
-            }
-        }
+  // Cek Ban setelah auth siap
+  useEffect(() => {
+    if (!authUser) return;
+    supabase.from('profiles').select('is_banned').eq('id', authUser.id).single()
+      .then(({ data: profile }) => {
+        if (profile?.is_banned) setIsBanned(true);
         setPageLoading(false);
-    };
-    checkAccess();
-  }, [router]);
+      });
+  }, [authUser]);
+
+  // Cek jika ada URL param ?id=...
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      if (id) {
+        setTargetId(id);
+      }
+    }
+  }, []);
 
   const handleSearch = async () => {
     if (!targetId.trim()) return toast.error("Masukkan ID Koi!");
+    if (!window.ethereum) return toast.error("MetaMask tidak ditemukan! Install MetaMask terlebih dahulu.");
     setIsSearching(true);
     setCurrentData(null);
 
     try {
-        const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545/");
+        const provider = new ethers.BrowserProvider(window.ethereum);
         const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
         const data = await contract.getKoi(targetId);
 

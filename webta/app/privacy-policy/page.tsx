@@ -26,12 +26,12 @@ export default function PrivacyPolicy() {
                 <Database className="text-orange-600 w-5 h-5" /> 1. Informasi yang Kami Kumpulkan
               </h2>
               <p className="mb-4">
-                Untuk memberikan layanan sertifikasi digital, WebKoi mengumpulkan beberapa jenis informasi dari Anda:
+                Untuk memberikan layanan sertifikasi digital, KoiChain ID mengumpulkan beberapa jenis informasi dari Anda:
               </p>
               <ul className="list-disc pl-6 space-y-2">
                 <li><strong>Informasi Akun:</strong> Nama lengkap, alamat email, dan nomor telepon yang Anda berikan saat mendaftar.</li>
                 <li><strong>Data Verifikasi (KYC):</strong> Foto Kartu Tanda Penduduk (KTP) dan data usaha (Nama Farm/Toko) untuk keperluan verifikasi mitra (Breeder/Penjual).</li>
-                <li><strong>Data Blockchain:</strong> Alamat Dompet (Wallet Address) Ethereum Anda dan riwayat transaksi yang terkait dengan Smart Contract WebKoi.</li>
+                <li><strong>Data Blockchain:</strong> Alamat Dompet (Wallet Address) Ethereum Anda dan riwayat transaksi yang terkait dengan Smart Contract KoiChain ID.</li>
               </ul>
             </section>
 
@@ -52,7 +52,7 @@ export default function PrivacyPolicy() {
                 <ShieldCheck className="text-orange-600 w-5 h-5" /> 3. Data Blockchain & Transparansi
               </h2>
               <p>
-                Harap dipahami bahwa WebKoi beroperasi di atas jaringan Blockchain (Ethereum/Hardhat). Sifat dasar teknologi ini adalah <strong>transparan dan tidak dapat diubah (immutable)</strong>.
+                Harap dipahami bahwa KoiChain ID beroperasi di atas jaringan Blockchain (Ethereum/Hardhat). Sifat dasar teknologi ini adalah <strong>transparan dan tidak dapat diubah (immutable)</strong>.
               </p>
               <p className="mt-2">
                 Setiap transaksi yang Anda lakukan (Minting, Transfer, Update) akan tercatat selamanya di buku besar publik. Meskipun kami melindungi data pribadi off-chain Anda (seperti foto KTP), data on-chain (seperti riwayat kepemilikan aset) dapat dilihat oleh publik.
@@ -71,7 +71,7 @@ export default function PrivacyPolicy() {
             <section>
               <h2 className="text-xl font-bold text-gray-900 mb-4">5. Kontak Kami</h2>
               <p>
-                Jika Anda memiliki pertanyaan mengenai kebijakan privasi ini, silakan hubungi kami melalui email di <a href="mailto:privacy@webkoi.com" className="text-blue-600 hover:underline">privacy@webkoi.com</a>.
+                Jika Anda memiliki pertanyaan mengenai kebijakan privasi ini, silakan hubungi kami melalui email di <a href="mailto:privacy@koichain.id" className="text-blue-600 hover:underline">privacy@koichain.id</a>.
               </p>
             </section>
           </div>

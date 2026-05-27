@@ -7,6 +7,7 @@ import { ArrowLeft, Upload, Save, Loader2, FileText } from 'lucide-react';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
 import Navbar from "@/components/Navbar";
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 
 export default function RequestCertificatePage() {
   const router = useRouter();
@@ -21,22 +22,19 @@ export default function RequestCertificatePage() {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
+  const { user: authUser } = useRequireAuth();
+
   // 1. Cek Kelayakan User (Wajib Login & Verified)
   useEffect(() => {
+    if (!authUser) return;
     const checkEligibility = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        router.replace('/login');
-        return;
-      }
-      setUser(user);
+      setUser(authUser);
 
       // Cek Profile Status
       const { data: profile } = await supabase
         .from('profiles')
         .select('verification_status')
-        .eq('id', user.id)
+        .eq('id', authUser.id)
         .single();
 
       if (profile?.verification_status !== 'verified') {
@@ -49,7 +47,7 @@ export default function RequestCertificatePage() {
     };
 
     checkEligibility();
-  }, [router]);
+  }, [authUser, router]);
 
   // Handle Ganti Foto
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

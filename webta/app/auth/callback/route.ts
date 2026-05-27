@@ -37,8 +37,8 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     
     if (!error) {
-      // Login sukses -> arahkan ke dashboard
-      return NextResponse.redirect(`${origin}/dashboard-user`);
+      // Login sukses -> arahkan ke landing page
+      return NextResponse.redirect(`${origin}/`);
     }
   }
 
