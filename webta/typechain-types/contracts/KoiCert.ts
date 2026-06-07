@@ -145,6 +145,7 @@ export interface KoiCertInterface extends Interface {
       string,
       string,
       string,
+      string,
       string
     ]
   ): string;
@@ -365,7 +366,8 @@ export interface KoiCert extends BaseContract {
       _certUrl: string,
       _contestUrl: string,
       _fatherId: string,
-      _motherId: string
+      _motherId: string,
+      _note: string
     ],
     [void],
     "nonpayable"
@@ -483,7 +485,8 @@ export interface KoiCert extends BaseContract {
       _certUrl: string,
       _contestUrl: string,
       _fatherId: string,
-      _motherId: string
+      _motherId: string,
+      _note: string
     ],
     [void],
     "nonpayable"

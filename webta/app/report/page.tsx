@@ -22,12 +22,6 @@ export default function ReportPage() {
 
   // Auto-fill jika user sudah login
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user?.email) {
-        setFormData(prev => ({ ...prev, contactInfo: session.user.email! }));
-      }
-    });
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user?.email) {
         setFormData(prev => ({ ...prev, contactInfo: session.user.email! }));

@@ -18,17 +18,7 @@ export function useRequireAuth(redirectTo = '/login') {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fallback: ambil session langsung untuk kecepatan awal
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session?.user) {
-        router.replace(redirectTo);
-      } else {
-        setUser(session.user);
-        setLoading(false);
-      }
-    });
-
-    // Listener untuk perubahan atau initial event
+    // Listener untuk perubahan atau initial event dari Supabase Auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session?.user) {
         router.replace(redirectTo);

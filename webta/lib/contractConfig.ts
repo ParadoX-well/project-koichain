@@ -21,7 +21,8 @@ export const CONTRACT_ABI = [
       { "internalType": "string", "name": "_certUrl", "type": "string" },
       { "internalType": "string", "name": "_contestUrl", "type": "string" },
       { "internalType": "string", "name": "_fatherId", "type": "string" }, // BARU
-      { "internalType": "string", "name": "_motherId", "type": "string" }  // BARU
+      { "internalType": "string", "name": "_motherId", "type": "string" }, // BARU
+      { "internalType": "string", "name": "_note", "type": "string" }      // BARU UNTUK CATATAN AWAL
     ],
     "name": "mintCertificate",
     "outputs": [],

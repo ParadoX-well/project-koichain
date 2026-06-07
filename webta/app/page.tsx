@@ -4,6 +4,10 @@ import { useState, useEffect } from 'react';
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import NewsSection from "@/components/NewsSection";
+import PartnerShowcase from "@/components/PartnerShowcase";
+import HowItWorks from "@/components/HowItWorks";
+import LiveShowcase from "@/components/LiveShowcase";
+import CallToAction from "@/components/CallToAction";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -36,7 +40,7 @@ export default function Home() {
         title: 'Anda adalah Seller',
         desc: 'Akun Anda sudah terdaftar sebagai Seller. Ingin memperluas jangkauan dengan mengajukan diri sebagai Breeder?',
         actionText: 'Ajukan sebagai Breeder',
-        actionUrl: '/dashboard-user/verification?upgrade=breeder'
+        actionUrl: '/profile-setting/verification?upgrade=breeder'
       });
       setShowModal(true);
     } else if (role.includes('breeder')) {
@@ -44,15 +48,15 @@ export default function Home() {
         title: 'Anda adalah Breeder',
         desc: 'Akun Anda sudah terdaftar sebagai Breeder. Ingin mulai berjualan dengan mengajukan diri sebagai Seller?',
         actionText: 'Ajukan sebagai Seller',
-        actionUrl: '/dashboard-user/verification?upgrade=seller'
+        actionUrl: '/profile-setting/verification?upgrade=seller'
       });
       setShowModal(true);
     } else {
-      router.push('/dashboard-user/verification');
+      router.push('/profile-setting/verification');
     }
   };
   return (
-    <div className="min-h-screen bg-white font-sans text-gray-900 flex flex-col overflow-x-hidden relative">
+    <div className="min-h-screen bg-white font-sans text-gray-900 flex flex-col relative">
       {/* --- MODAL POPUP --- */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in-up">
@@ -105,7 +109,7 @@ export default function Home() {
 
       <Navbar />
 
-      <main className="flex-grow">
+      <main className="flex-grow overflow-x-hidden">
 
         {/* --- HERO SECTION 2 KOLOM --- */}
         <section className="relative pt-20 pb-32 lg:pt-32 lg:pb-40 overflow-hidden">
@@ -208,34 +212,38 @@ export default function Home() {
         </section>
 
         {/* --- STATISTIK --- */}
-        <section className="bg-gray-900 py-12 relative z-20">
-          <div className="max-w-6xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-gray-800">
+        <section className="bg-gradient-to-br from-orange-500 via-red-500 to-pink-600 py-12 relative z-20 shadow-inner">
+          <div className="max-w-6xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-white/20">
             <div>
               <p className="text-4xl font-black text-white">100%</p>
-              <p className="text-xs text-gray-400 uppercase tracking-widest mt-2 font-medium">Anti Pemalsuan</p>
+              <p className="text-xs text-white/80 uppercase tracking-widest mt-2 font-medium">Anti Pemalsuan</p>
             </div>
             <div>
               <p className="text-4xl font-black text-white">24/7</p>
-              <p className="text-xs text-gray-400 uppercase tracking-widest mt-2 font-medium">Verifikasi Online</p>
+              <p className="text-xs text-white/80 uppercase tracking-widest mt-2 font-medium">Verifikasi Online</p>
             </div>
             <div>
               <p className="text-4xl font-black text-white">Web3</p>
-              <p className="text-xs text-gray-400 uppercase tracking-widest mt-2 font-medium">Smart Contract</p>
+              <p className="text-xs text-white/80 uppercase tracking-widest mt-2 font-medium">Smart Contract</p>
             </div>
             <div>
-              <p className="text-4xl font-black text-orange-500">QR</p>
-              <p className="text-xs text-gray-400 uppercase tracking-widest mt-2 font-medium">Akses Instan</p>
+              <p className="text-4xl font-black text-white">QR</p>
+              <p className="text-xs text-white/80 uppercase tracking-widest mt-2 font-medium">Akses Instan</p>
             </div>
           </div>
         </section>
 
-        {/* --- NEWS SECTION (F1 STYLE) --- */}
-        <div className="bg-gray-50 py-10">
-          <NewsSection />
-        </div>
+        {/* --- LIVE SHOWCASE SECTION --- */}
+        <LiveShowcase />
+
+        {/* --- PARTNER SHOWCASE SECTION --- */}
+        <PartnerShowcase />
+
+        {/* --- HOW IT WORKS SECTION --- */}
+        <HowItWorks />
 
         {/* --- FEATURE SECTION --- */}
-        <section className="py-24 bg-white">
+        <section className="py-24 bg-gray-50">
           <div className="max-w-6xl mx-auto px-6">
             <div className="text-center mb-16 animate-fade-up">
               <h2 className="text-4xl font-black text-gray-900 mb-4">Mengapa Memilih KoiChain ID?</h2>
@@ -244,7 +252,7 @@ export default function Home() {
 
             <div className="grid md:grid-cols-3 gap-8">
               {/* Feature 1 */}
-              <div className="p-8 rounded-[2rem] bg-gray-50 border border-gray-100 hover:border-orange-200 transition-all hover:shadow-xl hover:shadow-orange-900/5 group animate-fade-up delay-100">
+              <div className="p-8 rounded-[2rem] bg-white border border-gray-100 hover:border-orange-300 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(234,88,12,0.15)] group animate-fade-up delay-100">
                 <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 group-hover:rotate-3">
                   <Database className="text-orange-600 w-8 h-8" />
                 </div>
@@ -255,7 +263,7 @@ export default function Home() {
               </div>
 
               {/* Feature 2 */}
-              <div className="p-8 rounded-[2rem] bg-gray-50 border border-gray-100 hover:border-blue-200 transition-all hover:shadow-xl hover:shadow-blue-900/5 group animate-fade-up delay-200">
+              <div className="p-8 rounded-[2rem] bg-white border border-gray-100 hover:border-red-300 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(239,68,68,0.15)] group animate-fade-up delay-200">
                 <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 group-hover:-rotate-3">
                   <Activity className="text-blue-600 w-8 h-8" />
                 </div>
@@ -266,7 +274,7 @@ export default function Home() {
               </div>
 
               {/* Feature 3 */}
-              <div className="p-8 rounded-[2rem] bg-gray-50 border border-gray-100 hover:border-green-200 transition-all hover:shadow-xl hover:shadow-green-900/5 group animate-fade-up delay-300">
+              <div className="p-8 rounded-[2rem] bg-white border border-gray-100 hover:border-pink-300 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(236,72,153,0.15)] group animate-fade-up delay-300">
                 <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 group-hover:rotate-3">
                   <Globe className="text-green-600 w-8 h-8" />
                 </div>
@@ -278,6 +286,16 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+
+
+        {/* --- NEWS SECTION --- */}
+        <div className="bg-gray-50 border-t border-gray-100">
+          <NewsSection />
+        </div>
+
+        {/* --- CALL TO ACTION --- */}
+        <CallToAction />
 
       </main>
 

@@ -256,7 +256,7 @@ export default function BatchMintPage() {
                   <th className="px-4 py-3 text-left font-bold text-gray-600">Gender</th>
                   <th className="px-4 py-3 text-left font-bold text-gray-600">Umur</th>
                   <th className="px-4 py-3 text-left font-bold text-gray-600">Ukuran (cm)*</th>
-                  <th className="px-4 py-3 text-left font-bold text-gray-600">Kondisi</th>
+                  <th className="px-4 py-3 text-left font-bold text-gray-600">Catatan</th>
                   <th className="px-4 py-3 text-left font-bold text-gray-600">Foto</th>
                   <th className="px-4 py-3 text-left font-bold text-gray-600">Status</th>
                   <th className="px-4 py-3"></th>

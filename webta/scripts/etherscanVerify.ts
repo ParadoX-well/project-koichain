@@ -9,7 +9,7 @@ dotenv.config();
  */
 
 // 1. KONFIGURASI DATA
-const ETHERSCAN_API_KEY = "JSZPGYRNM1DAT1Q9SPM8FCUEZQIPRVF1R2";
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || "";
 
 // Hash Transaksi sukses Anda dari jaringan Sepolia
 const TX_HASH = "0x65b7324c8b356745b85e1c0721b61be8e69b02e617e54f5769fb96565b58f5a2";

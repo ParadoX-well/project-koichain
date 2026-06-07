@@ -7,11 +7,13 @@ import { CONTRACT_ADDRESS, CONTRACT_ABI } from '@/lib/contractConfig';
 import { ethers } from 'ethers';
 import { Upload, Save, Loader2, ArrowLeft, QrCode as QrIcon, ShieldAlert, GitMerge, Ban } from 'lucide-react';
 import Navbar from "@/components/Navbar";
+import BackButton from '@/components/BackButton';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
 import QRCode from 'react-qr-code';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
+import WalletLinkGate, { useWalletLinkCheck } from '@/components/WalletLinkGate';
 
 export default function MintKoiPage() {
   const { account } = useWallet();
@@ -23,6 +25,7 @@ export default function MintKoiPage() {
   const [isBanned, setIsBanned] = useState(false);
   const [isSeller, setIsSeller] = useState(false);
   const [userId, setUserId] = useState('');
+  const [showWalletGate, setShowWalletGate] = useState(false);
 
   const [formData, setFormData] = useState({
     id: '',
@@ -32,9 +35,12 @@ export default function MintKoiPage() {
     age: '',
     size: '',
     condition: '',
+    note: 'Genesis: Sertifikat Diterbitkan',
     fatherId: '',
     motherId: ''
   });
+
+  const [customVariety, setCustomVariety] = useState('');
 
   const [files, setFiles] = useState<{ photo: File | null, cert: File | null, contest: File | null }>({
     photo: null,
@@ -53,9 +59,10 @@ export default function MintKoiPage() {
     const checkAccess = async () => {
       setUserId(authUser.id);
 
-      const { data: profile } = await supabase.from('profiles').select('role, is_banned').eq('id', authUser.id).single();
+      const { data: profile } = await supabase.from('profiles').select('role, is_banned, full_name').eq('id', authUser.id).single();
 
       if (profile) {
+        setFormData(prev => ({ ...prev, breeder: profile.full_name || 'Anonymous' }));
         if (profile.is_banned) {
           setIsBanned(true);
           setLoading(false);
@@ -72,7 +79,7 @@ export default function MintKoiPage() {
           (typeof profile.role === 'string' && profile.role.includes('breeder'));
         if (!canMint) {
           toast.error('Akses Ditolak! Hanya Breeder yang boleh mint.');
-          router.replace('/dashboard-user');
+          router.replace('/profile-setting');
           return;
         }
       }
@@ -110,11 +117,19 @@ export default function MintKoiPage() {
   };
 
 
+  const { isLinked, recheckLink } = useWalletLinkCheck(userId, account);
+
   // 2. PROSES MINTING UTAMA
   const handleMint = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!account) return toast.error("Hubungkan Wallet Admin/Mitra!");
     if (!files.photo) return toast.error("Foto Ikan Wajib Diisi!");
+
+    // CEK WALLET TERKAIT
+    if (isLinked === false) {
+      setShowWalletGate(true);
+      return;
+    }
 
     setProcessLoading(true);
     setUploadedPaths([]);
@@ -122,6 +137,13 @@ export default function MintKoiPage() {
     const toastId = toast.loading("Memulai proses...");
 
     try {
+      const finalVariety = formData.variety === 'Lainnya' ? customVariety : formData.variety;
+      if (!finalVariety) {
+        toast.error("Varietas Wajib Diisi!", { id: toastId });
+        setProcessLoading(false);
+        return;
+      }
+
       // A. Upload File ke Supabase
       toast.loading("Mengupload foto & dokumen...", { id: toastId });
       const photoUrl = await uploadToStorage(files.photo, 'photos');
@@ -140,7 +162,7 @@ export default function MintKoiPage() {
 
       const tx = await contract.mintCertificate(
         formData.id,
-        formData.variety,
+        finalVariety,
         formData.breeder,
         formData.gender,
         formData.age,
@@ -150,7 +172,8 @@ export default function MintKoiPage() {
         certUrl,
         contestUrl,
         formData.fatherId,
-        formData.motherId
+        formData.motherId,
+        (formData.condition ? `Kondisi: ${formData.condition} | ` : "") + formData.note
       );
 
       toast.loading("Menunggu konfirmasi blok...", { id: toastId });
@@ -164,10 +187,11 @@ export default function MintKoiPage() {
         koi_id: formData.id,
         breeder_id: userId,
         wallet_address: account,
-        variety: formData.variety,
+        variety: finalVariety,
         size: parseInt(formData.size) || null,
         photo_url: photoUrl,
         spawning_session_id: null,
+        updated_at: new Date().toISOString(),
       });
 
       setMintedData({
@@ -193,7 +217,7 @@ export default function MintKoiPage() {
   if (isBanned) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900">
-        <div className="relative z-50"><Navbar /></div>
+        <Navbar />
         <div className="flex-grow flex flex-col items-center justify-center p-4 text-center z-0">
           <div className="bg-red-50 p-10 rounded-2xl shadow-xl border border-red-200 max-w-md animate-fade-in-up">
             <div className="bg-red-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -216,7 +240,7 @@ export default function MintKoiPage() {
   if (isSeller) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900">
-        <div className="relative z-50"><Navbar /></div>
+        <Navbar />
         <div className="flex-grow flex flex-col items-center justify-center p-4 text-center z-0">
           <div className="bg-orange-50 p-10 rounded-2xl shadow-xl border border-orange-200 max-w-md">
             <div className="bg-orange-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -229,10 +253,10 @@ export default function MintKoiPage() {
             <p className="text-sm text-gray-500 mb-8">
               Sebagai <strong>Seller</strong>, Anda hanya dapat melakukan transfer kepemilikan sertifikat yang sudah ada.
             </p>
-            <Link href="/admin/transfer" className="w-full block bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-xl font-bold text-lg transition shadow-lg">
-              Transfer Kepemilikan
+            <Link href="/transfer" className="w-full block bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-xl font-bold text-lg transition shadow-lg">
+              Transfer Ownership
             </Link>
-            <Link href="/dashboard-owner" className="block mt-3 text-sm text-gray-500 hover:text-gray-700 underline">
+            <Link href="/dashboard-mitra" className="block mt-3 text-sm text-gray-500 hover:text-gray-700 underline">
               Kembali ke Dashboard
             </Link>
           </div>
@@ -289,7 +313,7 @@ export default function MintKoiPage() {
 
       <main className="max-w-5xl mx-auto px-4 py-10">
         <div className="mb-8">
-          <Link href="/" className="text-sm text-gray-500 hover:text-orange-600 flex items-center gap-1 mb-2"><ArrowLeft size={16} /> Kembali</Link>
+          <BackButton />
           <h1 className="text-3xl font-bold text-gray-900">Upload Ikan Baru</h1>
           <p className="text-gray-500">Mencatat data fisik dan dokumen ke Blockchain (Permanen).</p>
         </div>
@@ -297,8 +321,34 @@ export default function MintKoiPage() {
         <form onSubmit={handleMint} className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 space-y-6">
           <div className="grid md:grid-cols-2 gap-6">
             <div><label className="font-bold text-sm block mb-2">ID Koi (Unik)</label><input required name="id" onChange={handleInputChange} type="text" placeholder="Contoh: KOI-2025-001" className="w-full p-3 border rounded-xl" /></div>
-            <div><label className="font-bold text-sm block mb-2">Varietas</label><input required name="variety" onChange={handleInputChange} type="text" placeholder="Kohaku, Showa..." className="w-full p-3 border rounded-xl" /></div>
-            <div><label className="font-bold text-sm block mb-2">Breeder</label><input required name="breeder" onChange={handleInputChange} type="text" className="w-full p-3 border rounded-xl" /></div>
+            <div>
+              <label className="font-bold text-sm block mb-2">Varietas</label>
+              <select required name="variety" onChange={handleInputChange} className="w-full p-3 border rounded-xl bg-white focus:ring-2 focus:ring-orange-500 outline-none">
+                <option value="">Pilih Varietas...</option>
+                <option value="Kohaku">Kohaku</option>
+                <option value="Taisho Sanke">Taisho Sanke</option>
+                <option value="Showa Sanshoku">Showa Sanshoku</option>
+                <option value="Shiro Utsuri">Shiro Utsuri</option>
+                <option value="Hi Utsuri">Hi Utsuri</option>
+                <option value="Utsurimono">Utsurimono (Lainnya)</option>
+                <option value="Asagi">Asagi</option>
+                <option value="Shusui">Shusui</option>
+                <option value="Koromo">Koromo</option>
+                <option value="Goshiki">Goshiki</option>
+                <option value="Kawarimono">Kawarimono</option>
+                <option value="Hikarimono">Hikarimono / Ogon</option>
+                <option value="Hikari Moyo">Hikari Moyo</option>
+                <option value="Hikari Utsuri">Hikari Utsuri</option>
+                <option value="Kinginrin">Kinginrin</option>
+                <option value="Tancho">Tancho</option>
+                <option value="Doitsu">Doitsu</option>
+                <option value="Lainnya">Lainnya (Ketik Sendiri)</option>
+              </select>
+              {formData.variety === 'Lainnya' && (
+                <input required type="text" value={customVariety} onChange={(e) => setCustomVariety(e.target.value)} placeholder="Ketik jenis varietas baru..." className="w-full mt-3 p-3 border border-orange-300 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none" />
+              )}
+            </div>
+
             <div>
               <label className="font-bold text-sm block mb-2">Gender</label>
               <select name="gender" onChange={handleInputChange} className="w-full p-3 border rounded-xl bg-white">
@@ -310,6 +360,7 @@ export default function MintKoiPage() {
             <div><label className="font-bold text-sm block mb-2">Umur</label><input name="age" onChange={handleInputChange} type="text" placeholder="Contoh: Sansai (3 Tahun)" className="w-full p-3 border rounded-xl" /></div>
             <div><label className="font-bold text-sm block mb-2">Ukuran (cm)</label><input required name="size" onChange={handleInputChange} type="number" placeholder="55" className="w-full p-3 border rounded-xl" /></div>
             <div className="col-span-2"><label className="font-bold text-sm block mb-2">Kondisi</label><input required name="condition" onChange={handleInputChange} type="text" placeholder="Sehat, Body Bulky..." className="w-full p-3 border rounded-xl" /></div>
+            <div className="col-span-2"><label className="font-bold text-sm block mb-2">Catatan Awal (Traceability)</label><input required name="note" value={formData.note} onChange={handleInputChange} type="text" placeholder="Catatan awal ikan ini..." className="w-full p-3 border rounded-xl" /></div>
           </div>
 
           {/* FORM SILSILAH (LINEAGE) */}
@@ -357,6 +408,16 @@ export default function MintKoiPage() {
           </button>
         </form>
       </main>
+
+      {/* POPUP WALLET LINK */}
+      {showWalletGate && (
+        <WalletLinkGate
+          userId={userId}
+          walletAddress={account}
+          onLinked={() => { setShowWalletGate(false); recheckLink(); toast.success('Wallet berhasil ditautkan! Silakan klik Simpan lagi.'); }}
+          onDismiss={() => setShowWalletGate(false)}
+        />
+      )}
     </div>
   );
 }

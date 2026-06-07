@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { supabase } from '@/lib/supabase';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
+import BackButton from '@/components/BackButton';
 import {
     ArrowLeft, PenLine, Trash2, PlusCircle,
     Calendar, Tag, Star, Newspaper, Loader2, AlertTriangle
@@ -65,7 +66,7 @@ export default function ManageNewsPage() {
                 .single();
 
             if (!profile || profile.is_banned || (profile.role !== 'author' && profile.role !== 'admin')) {
-                router.replace('/dashboard-user');
+                router.replace('/profile-setting');
                 return;
             }
 
@@ -122,13 +123,7 @@ export default function ManageNewsPage() {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                     <div>
-                        <Link
-                            href="/dashboard-author"
-                            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-red-600 font-medium transition mb-3 group"
-                        >
-                            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition duration-200" />
-                            Kembali ke Dashboard
-                        </Link>
+                        <BackButton />
                         <h1 className="text-3xl font-bold text-gray-900">Kelola Berita</h1>
                         <p className="text-gray-500 mt-1">
                             {userRole === 'admin' ? 'Semua berita di platform' : 'Berita yang kamu tulis'}

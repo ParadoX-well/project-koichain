@@ -26,13 +26,13 @@ export default function Footer() {
               Menjamin keaslian dan transparansi sejarah kepemilikan menggunakan teknologi Blockchain Ethereum.
             </p>
             <div className="flex gap-4 pt-2">
-              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-800 rounded-full hover:bg-blue-600 hover:text-white transition-all duration-300 group">
+              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-800 rounded-full hover:bg-gradient-to-br hover:from-orange-500 hover:to-red-500 hover:text-white hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] transition-all duration-300 group">
                 <Facebook size={18} />
               </a>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-800 rounded-full hover:bg-pink-600 hover:text-white transition-all duration-300 group">
+              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-800 rounded-full hover:bg-gradient-to-br hover:from-pink-500 hover:to-red-500 hover:text-white hover:shadow-[0_0_15px_rgba(236,72,153,0.4)] transition-all duration-300 group">
                 <Instagram size={18} />
               </a>
-              <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-800 rounded-full hover:bg-red-600 hover:text-white transition-all duration-300 group">
+              <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-800 rounded-full hover:bg-gradient-to-br hover:from-red-600 hover:to-orange-500 hover:text-white hover:shadow-[0_0_15px_rgba(220,38,38,0.4)] transition-all duration-300 group">
                 <Youtube size={18} />
               </a>
             </div>
@@ -42,7 +42,7 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-bold text-lg mb-6 relative inline-block">
               Menu Utama
-              <span className="absolute -bottom-2 left-0 w-12 h-1 bg-orange-500 rounded-full"></span>
+              <span className="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full"></span>
             </h3>
             <ul className="space-y-4 text-sm">
               <li>
@@ -58,13 +58,13 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/dashboard-user/verification" className="flex items-center gap-2 hover:text-orange-500 transition-colors group">
+                <Link href="/profile-setting/verification" className="flex items-center gap-2 hover:text-orange-500 transition-colors group">
                   <ChevronRight size={14} className="text-gray-600 group-hover:text-orange-500 transition-colors" />
                   Login Mitra
                 </Link>
               </li>
               <li>
-                <Link href="#" className="flex items-center gap-2 hover:text-orange-500 transition-colors group">
+                <Link href="/about-us" className="flex items-center gap-2 hover:text-orange-500 transition-colors group">
                   <ChevronRight size={14} className="text-gray-600 group-hover:text-orange-500 transition-colors" />
                   Tentang Kami
                 </Link>
@@ -76,7 +76,7 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-bold text-lg mb-6 relative inline-block">
               Layanan
-              <span className="absolute -bottom-2 left-0 w-12 h-1 bg-orange-500 rounded-full"></span>
+              <span className="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full"></span>
             </h3>
             <ul className="space-y-4 text-sm">
               <li className="flex items-center gap-2 text-gray-400">
@@ -102,7 +102,7 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-bold text-lg mb-6 relative inline-block">
               Bantuan
-              <span className="absolute -bottom-2 left-0 w-12 h-1 bg-orange-500 rounded-full"></span>
+              <span className="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full"></span>
             </h3>
             <ul className="space-y-5 text-sm">
               <li className="flex items-start gap-4">

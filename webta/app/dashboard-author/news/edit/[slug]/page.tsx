@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { supabase } from '@/lib/supabase';
+import BackButton from '@/components/BackButton';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { ArrowLeft, ImagePlus, Loader2, Save, Star, X, AlertCircle } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
@@ -71,7 +72,7 @@ export default function EditNewsPage() {
                 .single();
 
             if (!profile || profile.is_banned || (profile.role !== 'author' && profile.role !== 'admin')) {
-                router.replace('/dashboard-user');
+                router.replace('/profile-setting');
                 return;
             }
 
@@ -245,9 +246,7 @@ export default function EditNewsPage() {
             <div className="flex-grow flex flex-col items-center justify-center gap-4 text-gray-400">
                 <AlertCircle size={56} strokeWidth={1} />
                 <p className="text-xl font-bold text-gray-700">Berita tidak ditemukan</p>
-                <Link href="/dashboard-author/news" className="text-red-600 font-bold hover:underline flex items-center gap-2">
-                    <ArrowLeft size={16} /> Kembali ke Kelola Berita
-                </Link>
+                <BackButton />
             </div>
         </div>
     );
@@ -261,13 +260,7 @@ export default function EditNewsPage() {
 
                 {/* Header */}
                 <div className="mb-8">
-                    <Link
-                        href="/dashboard-author/news"
-                        className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-red-600 font-medium transition mb-4 group"
-                    >
-                        <ArrowLeft size={16} className="group-hover:-translate-x-1 transition duration-200" />
-                        Kembali ke Kelola Berita
-                    </Link>
+                    <BackButton />
                     <h1 className="text-3xl font-bold text-gray-900">Edit Berita</h1>
                     <p className="text-gray-500 mt-1">Perbarui informasi berita di bawah ini.</p>
                 </div>
@@ -479,7 +472,6 @@ export default function EditNewsPage() {
                                     className="sr-only"
                                 />
                                 <div
-                                    onClick={() => setIsMain(!isMain)}
                                     className={`w-12 h-6 rounded-full transition-colors duration-300 ${isMain ? 'bg-red-600' : 'bg-gray-200'}`}
                                 >
                                     <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ${isMain ? 'translate-x-6' : 'translate-x-0'}`} />

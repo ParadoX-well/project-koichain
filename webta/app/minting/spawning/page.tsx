@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import BackButton from '@/components/BackButton';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -35,7 +36,7 @@ export default function SpawningPage() {
         (typeof profile.role === 'string' && profile.role.includes('breeder')));
       if (!canAccess) {
         toast.error('Hanya Breeder yang dapat mengakses halaman ini.');
-        router.replace('/dashboard-owner');
+        router.replace('/dashboard-mitra');
         return;
       }
       setUserId(authUser.id);
@@ -114,9 +115,7 @@ export default function SpawningPage() {
       <Navbar />
       <Toaster position="top-center" />
       <main className="max-w-5xl mx-auto px-4 py-10">
-        <Link href="/dashboard-owner" className="flex items-center gap-2 text-sm text-gray-500 hover:text-orange-600 transition mb-6 w-fit group">
-          <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Kembali ke Dashboard
-        </Link>
+        <BackButton />
 
         <div className="flex items-end justify-between mb-8 gap-4">
           <div>

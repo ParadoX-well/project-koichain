@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import BackButton from '@/components/BackButton';
 import { supabase } from '@/lib/supabase';
 import { ArrowRight, Calendar, Tag, Newspaper, Search } from 'lucide-react';
 
@@ -54,6 +55,7 @@ export default function NewsPage() {
             const { data, error } = await supabase
                 .from('news')
                 .select('id, title, slug, content, category, image_url, is_main, created_at')
+                .order('is_main', { ascending: false })
                 .order('created_at', { ascending: false });
 
             if (!error && data) {
@@ -84,6 +86,7 @@ export default function NewsPage() {
                 {/* Hero Header */}
                 <section className="bg-white border-b border-gray-200 py-12">
                     <div className="max-w-6xl mx-auto px-6">
+                        <BackButton />
                         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                             <div>
                                 <p className="text-sm font-bold text-red-600 uppercase tracking-widest mb-2">Koi News Feed</p>

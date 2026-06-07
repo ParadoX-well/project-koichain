@@ -56,4 +56,3 @@ hardhat.config.js.cache
 artifacts/
 
 client_secret*.json
-*.json

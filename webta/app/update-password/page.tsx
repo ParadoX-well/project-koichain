@@ -72,7 +72,7 @@ export default function UpdatePasswordPage() {
       if (error) throw error;
       
       toast.success('Password berhasil diperbarui! Mengalihkan ke Dashboard...');
-      setTimeout(() => router.replace('/dashboard-user'), 2000);
+      setTimeout(() => router.replace('/profile-setting'), 2000);
     } catch (err: any) {
       toast.error(err.message || 'Terjadi kesalahan saat memperbarui password.');
     } finally {

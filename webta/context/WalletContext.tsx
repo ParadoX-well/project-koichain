@@ -92,6 +92,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
     checkConnection();
 
+    // Re-check koneksi saat user kembali ke tab ini (mencegah bug Metamask saat tab tertidur)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        checkConnection();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     // Re-validasi saat sesi auth berubah (login/logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
       if (event === 'SIGNED_OUT') {
@@ -116,19 +124,34 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           const success = await validateAndSetAccount(accounts[0]);
           if (success) toast.success("Akun Wallet Diganti");
         } else {
-          setAccount(null);
-          setIsAdmin(false);
-          toast("Wallet Disconnected", { icon: "👋" });
+          // Double check untuk memastikan bukan bug background tab Chrome
+          try {
+            const doubleCheck = await window.ethereum.request({ method: 'eth_accounts' });
+            if (doubleCheck && doubleCheck.length > 0) {
+              await validateAndSetAccount(doubleCheck[0], true);
+            } else {
+              setAccount(null);
+              setIsAdmin(false);
+              toast("Wallet Disconnected", { icon: "👋" });
+            }
+          } catch (e) {
+            setAccount(null);
+            setIsAdmin(false);
+          }
         }
       };
       window.ethereum.on('accountsChanged', handleAccountsChanged);
       return () => {
         subscription.unsubscribe();
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
         window.ethereum?.removeListener?.('accountsChanged', handleAccountsChanged);
       };
     }
 
-    return () => { subscription.unsubscribe(); };
+    return () => { 
+      subscription.unsubscribe(); 
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
   /**

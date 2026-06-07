@@ -23,7 +23,7 @@ const config: HardhatUserConfig = {
     enabled: true,
     currency: 'USD',
     token: 'ETH',
-    coinmarketcap: process.env.COINMARKETCAP_API_KEY || "9c3b1f2dfbcc48458f7ceedcfcc990cd",
+    coinmarketcap: process.env.COINMARKETCAP_API_KEY || "",
     noColors: false,
     gasPrice: 15,
   },
@@ -36,7 +36,7 @@ const config: HardhatUserConfig = {
     // Jaringan Publik Sepolia
     sepolia: {
       // Pastikan URL Infura di .env Anda benar
-      url: process.env.SEPOLIA_RPC_URL || "https://sepolia.infura.io/v3/659c299d5a4c4b91963dfdfdb106f16d",
+      url: process.env.SEPOLIA_RPC_URL || "",
       chainId: 11155111,
       // Jika saldo masih 0, transaksi ini akan gagal (insufficient funds)
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],

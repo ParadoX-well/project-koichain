@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { supabase } from '@/lib/supabase';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
+import BackButton from '@/components/BackButton';
 import { ArrowLeft, ImagePlus, Loader2, Send, Star, X } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -39,6 +40,7 @@ export default function CreateNewsPage() {
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [uploadingInlineImage, setUploadingInlineImage] = useState(false);
+    const [userRole, setUserRole] = useState<string>('author');
 
     // Form state
     const [title, setTitle] = useState('');
@@ -60,10 +62,11 @@ export default function CreateNewsPage() {
         supabase.from('profiles').select('role, is_banned').eq('id', authUser.id).single()
             .then(({ data: profile }) => {
                 if (!profile || profile.is_banned || (profile.role !== 'author' && profile.role !== 'admin')) {
-                    router.replace('/dashboard-user');
+                    router.replace('/profile-setting');
                     return;
                 }
                 setAuthorId(authUser.id);
+                setUserRole(profile.role);
                 setLoading(false);
             });
     }, [authUser, router]);
@@ -190,13 +193,7 @@ export default function CreateNewsPage() {
 
                 {/* Header */}
                 <div className="mb-8">
-                    <Link
-                        href="/dashboard-author"
-                        className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-red-600 font-medium transition mb-4 group"
-                    >
-                        <ArrowLeft size={16} className="group-hover:-translate-x-1 transition duration-200" />
-                        Kembali ke Dashboard
-                    </Link>
+                    <BackButton />
                     <h1 className="text-3xl font-bold text-gray-900">Tulis Berita Baru</h1>
                     <p className="text-gray-500 mt-1">Isi semua kolom di bawah lalu klik Terbitkan.</p>
                 </div>
@@ -403,7 +400,6 @@ export default function CreateNewsPage() {
                                     className="sr-only"
                                 />
                                 <div
-                                    onClick={() => setIsMain(!isMain)}
                                     className={`w-12 h-6 rounded-full transition-colors duration-300 ${isMain ? 'bg-red-600' : 'bg-gray-200'}`}
                                 >
                                     <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ${isMain ? 'translate-x-6' : 'translate-x-0'}`} />

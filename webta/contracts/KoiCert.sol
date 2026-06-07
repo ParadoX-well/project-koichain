@@ -53,7 +53,8 @@ contract KoiCert {
         string memory _certUrl,
         string memory _contestUrl,
         string memory _fatherId, // Input ID Bapak
-        string memory _motherId  // Input ID Ibu
+        string memory _motherId, // Input ID Ibu
+        string memory _note      // Input Catatan Awal
     ) public {
         require(bytes(koiRegistry[_id].id).length == 0, "ID Koi sudah terdaftar!");
 
@@ -88,7 +89,7 @@ contract KoiCert {
             owner: msg.sender,
             ownerName: _breeder,
             timestamp: block.timestamp,
-            note: "Genesis: Sertifikat Diterbitkan",
+            note: _note,
             photoUrl: _photoUrl,
             size: _size,
             age: _age

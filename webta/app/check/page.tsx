@@ -13,18 +13,23 @@ export default function CheckCertificatePage() {
   const scannerRef = useRef<Html5QrcodeScanner | null>(null);
 
   useEffect(() => {
+      let html5QrcodeScanner: Html5QrcodeScanner | null = null;
+      let isMounted = true;
+
       if (isScanning) {
           // Initialize scanner
-          scannerRef.current = new Html5QrcodeScanner(
+          html5QrcodeScanner = new Html5QrcodeScanner(
               "qr-reader", 
               { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }, 
               false
           );
           
           const onScanSuccess = (decodedText: string) => {
+              if (html5QrcodeScanner) {
+                  html5QrcodeScanner.clear().catch(console.error);
+              }
               setIsScanning(false);
               
-              // Jika hasilnya berupa URL dari sistem kita (misal: http://localhost:3000/koi/KOI-123)
               if (decodedText.includes('/koi/')) {
                   const parts = decodedText.split('/koi/');
                   const id = parts[parts.length - 1];
@@ -34,27 +39,24 @@ export default function CheckCertificatePage() {
                   }
               }
               
-              // Jika hasilnya cuma sekadar teks ID
               setSearchId(decodedText);
               router.push(`/koi/${encodeURIComponent(decodedText)}`);
           };
 
           const onScanFailure = (error: any) => {
-              // Abaikan error saat proses pencarian QR (akan jalan terus sampai sukses)
+              // Ignore failure
           };
 
-          scannerRef.current.render(onScanSuccess, onScanFailure);
-      } else {
-          // Cleanup scanner jika ditutup
-          if (scannerRef.current) {
-              scannerRef.current.clear().catch(console.error);
-              scannerRef.current = null;
+          // Render scanner only if mounted
+          if (isMounted) {
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
           }
-      }
+      } 
       
       return () => {
-          if (scannerRef.current) {
-              scannerRef.current.clear().catch(console.error);
+          isMounted = false;
+          if (html5QrcodeScanner) {
+              html5QrcodeScanner.clear().catch(console.error);
           }
       };
   }, [isScanning, router]);

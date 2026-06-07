@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import BackButton from '@/components/BackButton';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Calendar, Tag, Newspaper, AlertCircle } from 'lucide-react';
 
@@ -88,9 +89,7 @@ export default function NewsDetailPage() {
                         <AlertCircle size={56} strokeWidth={1} />
                         <p className="text-xl font-bold text-gray-700">Berita tidak ditemukan</p>
                         <p className="text-sm text-gray-400">Berita yang kamu cari mungkin sudah dihapus atau salah URL.</p>
-                        <Link href="/news" className="mt-4 text-red-600 font-bold flex items-center gap-2 hover:underline">
-                            <ArrowLeft size={16} /> Kembali ke Semua Berita
-                        </Link>
+                        <BackButton />
                     </div>
                 )}
 
@@ -103,13 +102,7 @@ export default function NewsDetailPage() {
                             <div className="max-w-3xl mx-auto">
 
                                 {/* Kembali */}
-                                <Link
-                                    href="/news"
-                                    className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-red-600 font-medium transition mb-6 group"
-                                >
-                                    <ArrowLeft size={16} className="group-hover:-translate-x-1 transition duration-200" />
-                                    Kembali ke Semua Berita
-                                </Link>
+                                <BackButton />
 
                                 {/* Badge kategori */}
                                 <div className="flex flex-wrap items-center gap-2 mb-5">
