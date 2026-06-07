@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "reset-db": "ts-node scripts/resetWeb2.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",

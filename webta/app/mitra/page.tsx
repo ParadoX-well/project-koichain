@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { Search, Store, MapPin, BadgeCheck, Instagram, ArrowRight, ShieldCheck, Trophy, Medal, Award } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import BackButton from '@/components/BackButton';
 import Link from 'next/link';
 
 export default function MitraCatalog() {
@@ -94,6 +95,9 @@ export default function MitraCatalog() {
             <Navbar />
             {/* HERO SECTION */}
             <div className="bg-gradient-to-br from-orange-600 to-red-700 text-white py-20 relative overflow-hidden">
+                <div className="absolute top-4 left-4 z-30">
+                    <BackButton />
+                </div>
                 <div className="absolute inset-0 bg-white opacity-5 mix-blend-overlay"></div>
                 <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
                 <div className="max-w-6xl mx-auto px-4 relative z-10 text-center">

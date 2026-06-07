@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import { ArrowRight, ShieldCheck, Ruler, Tag } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Ruler, Tag, Calendar } from 'lucide-react';
 
 type KoiItem = {
     id: string;
@@ -11,6 +11,7 @@ type KoiItem = {
     breed: string;
     size: number;
     front_image_url: string;
+    updated_at?: string;
 };
 
 // Data Dummy Estetik (Digunakan jika database kosong)
@@ -20,28 +21,32 @@ const DUMMY_KOIS: KoiItem[] = [
         name: "Shining Kohaku",
         breed: "Kohaku",
         size: 45,
-        front_image_url: "https://images.unsplash.com/photo-1510006766352-7b1945f32ea6?q=80&w=600&auto=format&fit=crop"
+        front_image_url: "https://images.unsplash.com/photo-1510006766352-7b1945f32ea6?q=80&w=600&auto=format&fit=crop",
+        updated_at: new Date().toISOString()
     },
     {
         id: "dummy-2",
         name: "Midnight Showa",
         breed: "Showa",
         size: 52,
-        front_image_url: "https://images.unsplash.com/photo-1544464525-4122d2507d3f?q=80&w=600&auto=format&fit=crop"
+        front_image_url: "https://images.unsplash.com/photo-1544464525-4122d2507d3f?q=80&w=600&auto=format&fit=crop",
+        updated_at: new Date().toISOString()
     },
     {
         id: "dummy-3",
         name: "Golden Ogon",
         breed: "Ogon",
         size: 38,
-        front_image_url: "https://images.unsplash.com/photo-1616035251642-1e5509747a06?q=80&w=600&auto=format&fit=crop"
+        front_image_url: "https://images.unsplash.com/photo-1616035251642-1e5509747a06?q=80&w=600&auto=format&fit=crop",
+        updated_at: new Date().toISOString()
     },
     {
         id: "dummy-4",
         name: "Platinum Sanke",
         breed: "Sanke",
         size: 49,
-        front_image_url: "https://images.unsplash.com/photo-1621303882794-c9b0e1e69b56?q=80&w=600&auto=format&fit=crop"
+        front_image_url: "https://images.unsplash.com/photo-1621303882794-c9b0e1e69b56?q=80&w=600&auto=format&fit=crop",
+        updated_at: new Date().toISOString()
     }
 ];
 
@@ -55,7 +60,7 @@ export default function LiveShowcase() {
                 // Tarik 4 sertifikat koi terbaru dari database Web3
                 const { data, error } = await supabase
                     .from('koi_certificates')
-                    .select('koi_id, variety, size, photo_url')
+                    .select('koi_id, variety, size, photo_url, updated_at')
                     .not('photo_url', 'is', null)
                     .order('updated_at', { ascending: false })
                     .order('minted_at', { ascending: false })
@@ -68,7 +73,8 @@ export default function LiveShowcase() {
                         name: cert.koi_id,
                         breed: cert.variety,
                         size: cert.size || 0,
-                        front_image_url: cert.photo_url
+                        front_image_url: cert.photo_url,
+                        updated_at: cert.updated_at
                     }));
                     setKois(mappedData);
                 } else {
@@ -144,7 +150,7 @@ export default function LiveShowcase() {
                                 <div className="p-6 flex flex-col flex-grow bg-white relative z-10">
                                     <h3 className="text-xl font-bold text-gray-900 mb-1 group-hover:text-orange-600 transition-colors">{koi.name}</h3>
                                     
-                                    <div className="mt-auto pt-4 flex items-center justify-between border-t border-gray-100">
+                                    <div className="mt-auto pt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-gray-100">
                                         <div className="flex items-center gap-1 text-sm font-medium text-gray-500">
                                             <Tag size={14} className="text-orange-500" />
                                             {koi.breed}
@@ -152,6 +158,10 @@ export default function LiveShowcase() {
                                         <div className="flex items-center gap-1 text-sm font-medium text-gray-500">
                                             <Ruler size={14} className="text-pink-500" />
                                             {koi.size} cm
+                                        </div>
+                                        <div className="flex items-center gap-1 text-sm font-medium text-gray-500 ml-auto">
+                                            <Calendar size={14} className="text-blue-500" />
+                                            {koi.updated_at ? new Date(koi.updated_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Baru'}
                                         </div>
                                     </div>
                                 </div>

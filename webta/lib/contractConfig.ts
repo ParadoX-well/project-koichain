@@ -1,5 +1,5 @@
 // ⚠️ GANTI ALAMAT INI DENGAN ALAMAT KONTRAK TERBARU SETIAP KALI DEPLOY ULANG
-export const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+export const CONTRACT_ADDRESS = "0xe728e32882ef84C2B08Dee1c69b2fFdc0D0872Ca";
 
 export const CONTRACT_ABI = [
   // Events
@@ -56,6 +56,7 @@ export const CONTRACT_ABI = [
       { "internalType": "string", "name": "_newAge", "type": "string" },
       { "internalType": "string", "name": "_newCondition", "type": "string" },
       { "internalType": "string", "name": "_newPhotoUrl", "type": "string" },
+      { "internalType": "string", "name": "_newCertUrl", "type": "string" },
       { "internalType": "string", "name": "_newContestUrl", "type": "string" },
       { "internalType": "string", "name": "_updateNote", "type": "string" }
     ],

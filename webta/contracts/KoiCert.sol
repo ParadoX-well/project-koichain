@@ -143,6 +143,7 @@ contract KoiCert {
         string memory _newAge,
         string memory _newCondition,
         string memory _newPhotoUrl,
+        string memory _newCertUrl,
         string memory _newContestUrl,
         string memory _updateNote
     ) public {
@@ -156,6 +157,9 @@ contract KoiCert {
         
         if (bytes(_newPhotoUrl).length > 0) {
             koi.photoUrl = _newPhotoUrl;
+        }
+        if (bytes(_newCertUrl).length > 0) {
+            koi.certUrls.push(_newCertUrl);
         }
         if (bytes(_newContestUrl).length > 0) {
             koi.contestUrls.push(_newContestUrl);

@@ -63,7 +63,8 @@ export default function KoiDetailPage({ params }: { params: Promise<{ id: string
                 if (typeof window !== 'undefined' && window.ethereum) {
                     provider = new ethers.BrowserProvider(window.ethereum);
                 } else {
-                    provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545/");
+                    // Fallback untuk browser HP atau tanpa MetaMask
+                    provider = new ethers.JsonRpcProvider("https://sepolia.drpc.org");
                 }
                 const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 
@@ -200,14 +201,15 @@ export default function KoiDetailPage({ params }: { params: Promise<{ id: string
                 }
 
                 // 4. FETCH SPAWNING SESSION dari Supabase
-                // Format ID anakan: KOI-YYYY-XXXX-NNN → session_code: SPAWN-YYYY-XXXX
+                // Format ID anakan: KOI-YYYY-XXXX-NNN → session_code: KOI-YYYY-XXXX atau SPAWN-YYYY-XXXX
                 const parts = koiId.split('-');
                 if (parts.length >= 4 && parts[0] === 'KOI') {
-                    const sessionCode = `SPAWN-${parts[1]}-${parts[2]}`;
+                    const sessionCodeNew = `KOI-${parts[1]}-${parts[2]}`;
+                    const sessionCodeOld = `SPAWN-${parts[1]}-${parts[2]}`;
                     const { data: sessionData, error: sessionErr } = await supabase
                         .from('spawning_sessions')
                         .select('*, spawning_fathers(father_koi_id), profiles(full_name)')
-                        .eq('session_code', sessionCode)
+                        .or(`session_code.eq.${sessionCodeNew},session_code.eq.${sessionCodeOld}`)
                         .maybeSingle();
                         
                     if (sessionData && !sessionErr) {
@@ -584,7 +586,7 @@ export default function KoiDetailPage({ params }: { params: Promise<{ id: string
                                             rel="noopener noreferrer"
                                             className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:border-orange-500 hover:text-orange-600 transition shadow-sm"
                                         >
-                                            <Tag size={16} /> {idx === 0 ? "Sertifikat Asli" : `Dokumen #${idx + 1}`}
+                                            <Tag size={16} /> {koiData.certUrls.length > 1 ? `Sertifikat Asli ${idx + 1}` : "Sertifikat Asli"}
                                         </a>
                                     ))
                                 ) : (
@@ -601,7 +603,7 @@ export default function KoiDetailPage({ params }: { params: Promise<{ id: string
                                             rel="noopener noreferrer"
                                             className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:border-blue-500 hover:text-blue-600 transition shadow-sm"
                                         >
-                                            <Tag size={16} /> {idx === 0 ? "Sertifikat Lomba" : `Juara #${idx + 1}`}
+                                            <Tag size={16} /> {koiData.contestUrls.length > 1 ? `Sertifikat Lomba ${idx + 1}` : "Sertifikat Lomba"}
                                         </a>
                                     ))
                                 ) : null}

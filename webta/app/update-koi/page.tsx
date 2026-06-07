@@ -35,8 +35,9 @@ export default function UpdateKoiPage() {
     updateNote: ''
   });
 
-  const [files, setFiles] = useState<{ photo: File | null, contest: File | null }>({
+  const [files, setFiles] = useState<{ photo: File | null, cert: File | null, contest: File | null }>({
     photo: null,
+    cert: null,
     contest: null
   });
 
@@ -150,14 +151,19 @@ export default function UpdateKoiPage() {
 
     try {
         let newPhotoUrl = "";
+        let newCertUrl = "";
         let newContestUrl = "";
 
         if (files.photo) {
             toast.loading("Mengupload foto...", { id: toastId });
             newPhotoUrl = await uploadToStorage(files.photo);
         }
+        if (files.cert) {
+            toast.loading("Mengupload sertifikat asli...", { id: toastId });
+            newCertUrl = await uploadToStorage(files.cert);
+        }
         if (files.contest) {
-            toast.loading("Mengupload sertifikat...", { id: toastId });
+            toast.loading("Mengupload sertifikat kontes...", { id: toastId });
             newContestUrl = await uploadToStorage(files.contest);
         }
 
@@ -173,6 +179,7 @@ export default function UpdateKoiPage() {
             formData.age,
             formData.condition,
             newPhotoUrl,
+            newCertUrl,
             newContestUrl,
             (formData.condition ? `Kondisi: ${formData.condition} | ` : "") + formData.updateNote
         );
@@ -198,7 +205,7 @@ export default function UpdateKoiPage() {
         }
 
         toast.success("DATA BERHASIL DIUPDATE!", { id: toastId });
-        setFiles({ photo: null, contest: null });
+        setFiles({ photo: null, cert: null, contest: null });
         handleSearch(); 
 
     } catch (err: any) {
@@ -345,12 +352,32 @@ export default function UpdateKoiPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="border-2 border-dashed border-gray-300 p-8 rounded-2xl text-center hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer relative group">
-                        <Upload className="mx-auto text-gray-400 group-hover:text-blue-500 transition-colors mb-3 w-8 h-8" />
-                        <span className="text-base font-bold text-gray-700 block">Update Foto Ikan (Opsional)</span>
-                        <span className="text-sm text-gray-400 block mt-1">{files.photo ? <span className="text-blue-600 font-medium">{files.photo.name}</span> : "Upload jika ada perubahan visual"}</span>
-                        <input type="file" accept="image/*" onChange={e => setFiles({...files, photo: e.target.files?.[0] || null})} className="absolute inset-0 opacity-0 cursor-pointer" />
+                    {/* FOTO */}
+                    <div>
+                        <label className="font-bold text-sm block mb-2">Update Foto Terbaru (Opsional)</label>
+                        <label className="w-full flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 transition">
+                            <Upload className="text-gray-400 mr-2" size={24} />
+                            <span className="text-sm text-gray-500">
+                                {files.photo ? files.photo.name : "Pilih File JPG/PNG"}
+                            </span>
+                            <input type="file" className="hidden" accept="image/*" 
+                                onChange={(e) => setFiles({ ...files, photo: e.target.files?.[0] || null })} />
+                        </label>
                     </div>
+
+                    {/* SERTIFIKAT FISIK ASLI */}
+                    <div>
+                        <label className="font-bold text-sm block mb-2 text-orange-700">Upload Sertifikat Asli (Susulan)</label>
+                        <label className="w-full flex items-center justify-center p-4 border-2 border-dashed border-orange-300 bg-orange-50 rounded-xl cursor-pointer hover:bg-orange-100 transition">
+                            <FileText className="text-orange-500 mr-2" size={24} />
+                            <span className="text-sm text-orange-600 font-medium">
+                                {files.cert ? files.cert.name : "Pilih File Sertifikat Asli (Jika Ada)"}
+                            </span>
+                            <input type="file" className="hidden" accept="image/*,application/pdf"
+                                onChange={(e) => setFiles({ ...files, cert: e.target.files?.[0] || null })} />
+                        </label>
+                    </div>
+
                     <div className="border-2 border-dashed border-gray-300 p-8 rounded-2xl text-center hover:bg-purple-50 hover:border-purple-300 transition-colors cursor-pointer relative group">
                         <Upload className="mx-auto text-gray-400 group-hover:text-purple-500 transition-colors mb-3 w-8 h-8" />
                         <span className="text-base font-bold text-gray-700 block">Sertifikat Lomba Baru (Opsional)</span>

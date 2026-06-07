@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { AlertTriangle, Send, Upload, FileText, CheckCircle, Loader2 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
+import BackButton from '@/components/BackButton';
 
 export default function ReportPage() {
   const [loading, setLoading] = useState(false);
@@ -117,6 +118,9 @@ export default function ReportPage() {
       <Toaster position="top-center" />
 
       <main className="flex-grow container mx-auto px-4 py-12 max-w-3xl">
+        <div className="mb-6">
+          <BackButton />
+        </div>
         
         <div className="text-center mb-10">
           <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Pusat Bantuan & Laporan</h1>

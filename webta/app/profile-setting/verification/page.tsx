@@ -481,10 +481,17 @@ function VerificationContent() {
                                 </div>
                             </div>
 
-                            <button type="submit" disabled={submitting} className="w-full bg-gradient-to-r from-orange-600 to-pink-600 hover:from-orange-700 hover:to-pink-700 text-white font-black py-4 rounded-xl shadow-lg shadow-orange-600/30 flex items-center justify-center gap-2 transition-all transform active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed mt-4 text-lg">
-                                {submitting ? <Loader2 className="animate-spin" /> : <Save size={24} />}
-                                {submitting ? "Menyimpan Data..." : profile.role === 'admin' ? "Simpan Profil Bisnis" : "Kirim Pengajuan Kemitraan"}
-                            </button>
+                            <div className="flex flex-col md:flex-row gap-4 mt-8">
+                                {profile.role !== 'admin' && !profile.requested_role && (
+                                    <button type="button" onClick={() => setView('selection')} className="w-full md:w-1/4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-4 rounded-xl transition-all">
+                                        Batal
+                                    </button>
+                                )}
+                                <button type="submit" disabled={submitting} className="flex-1 w-full bg-gradient-to-r from-orange-600 to-pink-600 hover:from-orange-700 hover:to-pink-700 text-white font-black py-4 rounded-xl shadow-lg shadow-orange-600/30 flex items-center justify-center gap-2 transition-all transform active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed text-lg">
+                                    {submitting ? <Loader2 className="animate-spin" /> : <Save size={24} />}
+                                    {submitting ? "Menyimpan Data..." : profile.role === 'admin' ? "Simpan Profil Bisnis" : "Kirim Pengajuan Kemitraan"}
+                                </button>
+                            </div>
                         </form>
                     </div>
                 )}

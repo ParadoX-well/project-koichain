@@ -15,10 +15,12 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 interface OffspringRow {
   id: string;
   variety: string;
+  customVariety?: string;
   gender: string;
   age: string;
   size: string;
   condition: string;
+  note: string;
   breederName: string;
   photo: File | null;
   status: 'pending' | 'minting' | 'done' | 'error';
@@ -32,10 +34,12 @@ const emptyRow = (sessionCode: string, index: number, defaultBreeder: string = '
   return {
     id: `KOI-${shortCode}-${String(index).padStart(3, '0')}`,
     variety: '',
+    customVariety: '',
     gender: 'Tidak Diketahui',
     age: '',
     size: '',
     condition: 'Sehat',
+    note: '',
     breederName: defaultBreeder,
     photo: null,
     status: 'pending',
@@ -106,7 +110,7 @@ export default function BatchMintPage() {
     if (pending.length === 0) return toast.error('Tidak ada anakan untuk di-mint.');
     if (!account) return toast.error('Hubungkan Wallet terlebih dahulu!');
 
-    const invalid = rows.findIndex(r => r.status === 'pending' && (!r.variety.trim() || !r.size));
+    const invalid = rows.findIndex(r => r.status === 'pending' && ((r.variety === 'Lainnya' ? !r.customVariety?.trim() : !r.variety.trim()) || !r.size));
     if (invalid !== -1) { toast.error(`Baris ${invalid + 1}: Varietas dan Ukuran wajib diisi.`); return; }
 
     if (!confirm(`Mint ${pending.length} anakan ke Blockchain? Proses ini tidak dapat dibatalkan.`)) return;
@@ -125,11 +129,12 @@ export default function BatchMintPage() {
 
       updateRow(i, 'status', 'minting');
       try {
+        const finalVariety = row.variety === 'Lainnya' ? (row.customVariety || 'Lainnya') : row.variety;
         const photoUrl = row.photo ? await uploadPhoto(row.photo) : '';
-        // Parameter order: id, variety, breeder, gender, age, size, condition, photo, cert, contest, fatherId, motherId
+        // Parameter order: id, variety, breeder, gender, age, size, condition, photo, cert, contest, fatherId, motherId, note
         const tx = await contract.mintCertificate(
           row.id,
-          row.variety,
+          finalVariety,
           row.breederName,
           row.gender,
           row.age,                       // umur anakan
@@ -140,6 +145,7 @@ export default function BatchMintPage() {
           '',                            // contest
           fatherIds,                     // fatherId
           session.mother_koi_id || '',   // motherId
+          (row.condition ? `Kondisi: ${row.condition} | ` : "") + (row.note || "Hasil Batch Minting") // note
         );
         await tx.wait();
         updateRow(i, 'status', 'done');
@@ -149,7 +155,7 @@ export default function BatchMintPage() {
           koi_id: row.id,
           breeder_id: session.breeder_id,
           wallet_address: account,
-          variety: row.variety,
+          variety: finalVariety,
           size: parseInt(row.size) || null,
           photo_url: row.photo ? (await uploadPhoto(row.photo).catch(() => '')) : '',
           spawning_session_id: session.id,
@@ -256,6 +262,7 @@ export default function BatchMintPage() {
                   <th className="px-4 py-3 text-left font-bold text-gray-600">Gender</th>
                   <th className="px-4 py-3 text-left font-bold text-gray-600">Umur</th>
                   <th className="px-4 py-3 text-left font-bold text-gray-600">Ukuran (cm)*</th>
+                  <th className="px-4 py-3 text-left font-bold text-gray-600">Kondisi</th>
                   <th className="px-4 py-3 text-left font-bold text-gray-600">Catatan</th>
                   <th className="px-4 py-3 text-left font-bold text-gray-600">Foto</th>
                   <th className="px-4 py-3 text-left font-bold text-gray-600">Status</th>
@@ -270,8 +277,32 @@ export default function BatchMintPage() {
                         className="w-36 px-2 py-1.5 border border-gray-200 rounded-lg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-orange-400 disabled:bg-gray-50 disabled:text-gray-400" />
                     </td>
                     <td className="px-4 py-3">
-                      <input value={row.variety} onChange={e => updateRow(i, 'variety', e.target.value)} placeholder="Kohaku..." disabled={row.status !== 'pending'}
-                        className="w-28 px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-orange-400 disabled:bg-gray-50 disabled:text-gray-400" />
+                      <select value={row.variety} onChange={e => updateRow(i, 'variety', e.target.value)} disabled={row.status !== 'pending'}
+                        className="w-32 px-2 py-1.5 border border-gray-200 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-orange-400 disabled:bg-gray-50 disabled:text-gray-400">
+                        <option value="">Pilih Varietas...</option>
+                        <option value="Kohaku">Kohaku</option>
+                        <option value="Taisho Sanke">Taisho Sanke</option>
+                        <option value="Showa Sanshoku">Showa Sanshoku</option>
+                        <option value="Shiro Utsuri">Shiro Utsuri</option>
+                        <option value="Hi Utsuri">Hi Utsuri</option>
+                        <option value="Utsurimono">Utsurimono (Lainnya)</option>
+                        <option value="Asagi">Asagi</option>
+                        <option value="Shusui">Shusui</option>
+                        <option value="Koromo">Koromo</option>
+                        <option value="Goshiki">Goshiki</option>
+                        <option value="Kawarimono">Kawarimono</option>
+                        <option value="Hikarimono">Hikarimono / Ogon</option>
+                        <option value="Hikari Moyo">Hikari Moyo</option>
+                        <option value="Hikari Utsuri">Hikari Utsuri</option>
+                        <option value="Kinginrin">Kinginrin</option>
+                        <option value="Tancho">Tancho</option>
+                        <option value="Doitsu">Doitsu</option>
+                        <option value="Lainnya">Lainnya (Ketik Sendiri)</option>
+                      </select>
+                      {row.variety === 'Lainnya' && (
+                        <input value={row.customVariety || ''} onChange={e => updateRow(i, 'customVariety', e.target.value)} placeholder="Ketik jenis baru..." disabled={row.status !== 'pending'}
+                          className="w-32 mt-2 px-2 py-1.5 border border-orange-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:bg-gray-50 disabled:text-gray-400" />
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <input value={row.breederName} onChange={e => updateRow(i, 'breederName', e.target.value)} placeholder="Nama breeder..." disabled={row.status !== 'pending'}
@@ -294,8 +325,12 @@ export default function BatchMintPage() {
                         className="w-16 px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-orange-400 disabled:bg-gray-50 disabled:text-gray-400" />
                     </td>
                     <td className="px-4 py-3">
-                      <input value={row.condition} onChange={e => updateRow(i, 'condition', e.target.value)} placeholder="Sehat" disabled={row.status !== 'pending'}
+                      <input value={row.condition} onChange={e => updateRow(i, 'condition', e.target.value)} placeholder="Sehat, Bulky..." disabled={row.status !== 'pending'}
                         className="w-24 px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-orange-400 disabled:bg-gray-50 disabled:text-gray-400" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <input value={row.note} onChange={e => updateRow(i, 'note', e.target.value)} placeholder="Catatan tambahan..." disabled={row.status !== 'pending'}
+                        className="w-32 px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-orange-400 disabled:bg-gray-50 disabled:text-gray-400" />
                     </td>
                     <td className="px-4 py-3">
                       {row.status === 'pending' ? (

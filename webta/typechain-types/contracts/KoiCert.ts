@@ -164,7 +164,16 @@ export interface KoiCertInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "updateKoiStats",
-    values: [string, BigNumberish, string, string, string, string, string]
+    values: [
+      string,
+      BigNumberish,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string
+    ]
   ): string;
 
   decodeFunctionResult(functionFragment: "getKoi", data: BytesLike): Result;
@@ -395,6 +404,7 @@ export interface KoiCert extends BaseContract {
       _newAge: string,
       _newCondition: string,
       _newPhotoUrl: string,
+      _newCertUrl: string,
       _newContestUrl: string,
       _updateNote: string
     ],
@@ -516,6 +526,7 @@ export interface KoiCert extends BaseContract {
       _newAge: string,
       _newCondition: string,
       _newPhotoUrl: string,
+      _newCertUrl: string,
       _newContestUrl: string,
       _updateNote: string
     ],

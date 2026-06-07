@@ -59,7 +59,7 @@ export default function SpawningPage() {
   const generateCode = () => {
     const year = new Date().getFullYear();
     const rand = Math.floor(Math.random() * 9000) + 1000;
-    return `SPAWN-${year}-${rand}`;
+    return `KOI-${year}-${rand}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -68,6 +68,63 @@ export default function SpawningPage() {
     if (!form.motherId.trim()) { toast.error('ID Induk Betina wajib diisi.'); return; }
 
     setSaving(true);
+    
+    // --- VALIDASI KEPEMILIKAN INDUKAN ---
+    try {
+        const allParentIds = [form.motherId.trim(), ...validFathers];
+        
+        // 1. Ambil semua dompet pengguna saat ini
+        const { data: userWallets } = await supabase
+            .from('user_wallets')
+            .select('wallet_address')
+            .eq('user_id', userId);
+            
+        const userWalletList = userWallets?.map(w => w.wallet_address?.toLowerCase()) || [];
+        
+        // 2. Ambil data koi_certificates dari indukan-indukan tersebut (Case-Insensitive)
+        const orQuery = allParentIds.map(id => `koi_id.ilike."${id}"`).join(',');
+        const { data: parentsData, error: parentsError } = await supabase
+            .from('koi_certificates')
+            .select('koi_id, wallet_address')
+            .or(orQuery);
+            
+        if (parentsError) throw parentsError;
+        
+        // Pastikan semua ID ikan ditemukan di database (Pengecekan Case-Insensitive)
+        if (!parentsData || parentsData.length !== allParentIds.length) {
+            const foundIdsLower = parentsData?.map(p => p.koi_id.toLowerCase()) || [];
+            const missingIds = allParentIds.filter(id => !foundIdsLower.includes(id.toLowerCase()));
+            
+            if (missingIds.length > 0) {
+                toast.error(`Aset Indukan tidak ditemukan: ${missingIds.join(', ')}`);
+                setSaving(false);
+                return;
+            }
+        }
+        
+        const NULL_ADDRESS = '0x0000000000000000000000000000000000000000'.toLowerCase();
+        
+        // 3. Cek apakah setiap indukan dimiliki oleh user (dan tidak mati/burn)
+        for (const parent of parentsData) {
+            if (parent.wallet_address?.toLowerCase() === NULL_ADDRESS) {
+                toast.error(`Indukan ${parent.koi_id} sudah ditandai Mati (Burned).`);
+                setSaving(false);
+                return;
+            }
+            if (!parent.wallet_address || !userWalletList.includes(parent.wallet_address.toLowerCase())) {
+                toast.error(`Indukan ${parent.koi_id} BUKAN milik Anda! Sesi ditolak.`);
+                setSaving(false);
+                return;
+            }
+        }
+    } catch (err: any) {
+        console.error("Spawning Validation Error:", err);
+        toast.error(`Gagal validasi: ${err.message || err.toString()}`);
+        setSaving(false);
+        return;
+    }
+    // --- SELESAI VALIDASI ---
+
     const code = generateCode();
 
     const { data: session, error } = await supabase
