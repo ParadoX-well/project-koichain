@@ -93,13 +93,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
     checkConnection();
 
-    // Re-check koneksi saat user kembali ke tab ini (mencegah bug Metamask saat tab tertidur)
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        checkConnection();
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    // Re-check koneksi dihapus karena menyebabkan UI stuck/harus refresh saat pindah tab. 
+    // MetaMask otomatis menangani ini lewat event 'accountsChanged'.
 
     // Re-validasi saat sesi auth berubah (login/logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
@@ -144,14 +139,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       window.ethereum.on('accountsChanged', handleAccountsChanged);
       return () => {
         subscription.unsubscribe();
-        document.removeEventListener("visibilitychange", handleVisibilityChange);
         window.ethereum?.removeListener?.('accountsChanged', handleAccountsChanged);
       };
     }
 
     return () => {
       subscription.unsubscribe();
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
