@@ -14,7 +14,8 @@ declare global {
 // --- CONFIG ADMIN ---
 const ADMIN_WALLETS = [
   "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",  // Akun Hardhat
-  "0x59f778dF00c354742fAc5992737218C5A023b69b", // Wallet Asli
+  "0x59f778dF00c354742fAc5992737218C5A023b69b",  // Wallet Asli 1 (dipake akun breeder)
+  "0x281cfC570B52e4099946cfb731300745A3842892", // Wallet Asli 2 Bikinan (dipake akun koichain)
 ].map(addr => addr.toLowerCase());
 
 interface WalletConflictInfo {
@@ -148,8 +149,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       };
     }
 
-    return () => { 
-      subscription.unsubscribe(); 
+    return () => {
+      subscription.unsubscribe();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
