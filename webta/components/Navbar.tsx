@@ -57,8 +57,27 @@ export default function Navbar() {
             }
         };
 
+        let mounted = true;
+
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (!mounted) return;
+            if (session?.user) {
+                setUser(session.user);
+                loadUserProfile(session.user.id, session.user.email || '', session.user.user_metadata);
+            } else {
+                setUser(null);
+                setRole('user');
+                setDisplayName('');
+                setAvatarUrl('');
+                setNotifications([]);
+                setUnreadCount(0);
+            }
+            setIsAuthChecking(false);
+        });
+
         // Listener perubahan atau initial event dari Supabase Auth
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (!mounted) return;
             if (session?.user) {
                 setUser(session.user);
                 loadUserProfile(session.user.id, session.user.email || '', session.user.user_metadata);
@@ -96,6 +115,7 @@ export default function Navbar() {
         document.addEventListener("mousedown", handleClickOutside);
 
         return () => {
+            mounted = false;
             subscription.unsubscribe();
             document.removeEventListener("visibilitychange", handleVisibilityChange);
             document.removeEventListener("mousedown", handleClickOutside);

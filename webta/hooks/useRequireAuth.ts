@@ -18,7 +18,21 @@ export function useRequireAuth(redirectTo = '/login') {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Listener untuk perubahan atau initial event dari Supabase Auth
+    let mounted = true;
+
+    // Ambil sesi awal secara eksplisit agar tidak nyangkut
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (mounted) {
+        if (!session?.user) {
+          router.replace(redirectTo);
+        } else {
+          setUser(session.user);
+          setLoading(false);
+        }
+      }
+    });
+
+    // Listener untuk perubahan Auth (login/logout/token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session?.user) {
         router.replace(redirectTo);
@@ -28,7 +42,10 @@ export function useRequireAuth(redirectTo = '/login') {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [router, redirectTo]);
 
   return { user, loading };
