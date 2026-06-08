@@ -93,8 +93,20 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
     checkConnection();
 
-    // Re-check koneksi dihapus karena menyebabkan UI stuck/harus refresh saat pindah tab. 
-    // MetaMask otomatis menangani ini lewat event 'accountsChanged'.
+    // Re-check koneksi saat pindah tab/aplikasi (sangat penting untuk MetaMask Mobile)
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && typeof window !== 'undefined' && window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          if (accounts && accounts.length > 0) {
+            await validateAndSetAccount(accounts[0], true);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     // Re-validasi saat sesi auth berubah (login/logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
@@ -145,6 +157,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
     return () => {
       subscription.unsubscribe();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 

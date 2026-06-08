@@ -42,7 +42,7 @@ export default function CallToAction() {
                                 Daftar Sekarang Gratis <ArrowRight size={20} />
                             </Link>
                             <Link 
-                                href="/search" 
+                                href="/check" 
                                 className="inline-flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm border-2 border-white/50 text-white font-bold px-8 py-4 rounded-full text-lg hover:bg-white/20 transition-all duration-300"
                             >
                                 Cek Keaslian Sertifikat

@@ -11,6 +11,9 @@ export default function PartnerShowcase() {
 
     useEffect(() => {
         const fetchPartners = async () => {
+            // FIX: Dobrak status Auth dulu supaya antrian request database tidak hang
+            await supabase.auth.getSession();
+
             const { data: profiles } = await supabase
                 .from('profiles')
                 .select(`

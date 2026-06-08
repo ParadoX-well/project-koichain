@@ -54,6 +54,9 @@ export default function NewsSection() {
 
     useEffect(() => {
         async function fetchNews() {
+            // FIX: Dobrak status Auth dulu supaya antrian request database tidak hang
+            await supabase.auth.getSession();
+
             const { data, error } = await supabase
                 .from('news')
                 .select('id, title, slug, content, category, image_url, is_main, created_at')
