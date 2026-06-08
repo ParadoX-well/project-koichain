@@ -4,13 +4,23 @@ import { createClient } from '@supabase/supabase-js';
 const getCookie = (name: string) => {
   if (typeof document === 'undefined') return '';
   let value = '';
-  let i = 0;
-  while (true) {
-    const chunkName = i === 0 ? name : `${name}.${i}`;
-    const match = document.cookie.match(new RegExp('(^| )' + chunkName + '=([^;]+)'));
-    if (!match) break;
-    value += decodeURIComponent(match[2]);
-    i++;
+  // @supabase/ssr terkadang menyimpan cookie tanpa chunk (nama asli) 
+  // atau langsung di-chunk mulai dari .0, .1, dst.
+  
+  // Cek format nama asli dulu
+  const matchAsli = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  if (matchAsli) {
+    value = decodeURIComponent(matchAsli[2]);
+  } else {
+    // Jika tidak ada nama asli, cek format chunk (.0, .1, dst)
+    let i = 0;
+    while (true) {
+      const chunkName = `${name}.${i}`;
+      const matchChunk = document.cookie.match(new RegExp('(^| )' + chunkName + '=([^;]+)'));
+      if (!matchChunk) break;
+      value += decodeURIComponent(matchChunk[2]);
+      i++;
+    }
   }
   return value;
 };
@@ -34,14 +44,12 @@ const setCookie = (name: string, value: string, days: number) => {
 
 const deleteCookie = (name: string) => {
   if (typeof document === 'undefined') return;
-  let i = 0;
-  while (true) {
-    const chunkName = i === 0 ? name : `${name}.${i}`;
-    const match = document.cookie.match(new RegExp('(^| )' + chunkName + '=([^;]+)'));
-    if (!match && i > 0) break; // Berhenti jika tidak ada chunk lagi
-    document.cookie = `${chunkName}=;path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT;SameSite=Lax;Secure`;
-    if (!match && i === 0) break; 
-    i++;
+  // Hapus nama asli
+  document.cookie = `${name}=;path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT;SameSite=Lax;Secure`;
+  
+  // Hapus kemungkinan chunk (.0 sampai .5 cukup aman)
+  for (let i = 0; i < 5; i++) {
+    document.cookie = `${name}.${i}=;path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT;SameSite=Lax;Secure`;
   }
 };
 
