@@ -128,11 +128,12 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
                     </div>
                 </div>
 
-                {/* Profile Info */}
-                <div className="max-w-7xl mx-auto px-6 relative pb-10">
-                    <div className="flex flex-col md:flex-row gap-6 md:items-end -mt-20 relative z-10">
-                        {/* Avatar */}
-                        <div className="w-40 h-40 rounded-full border-4 border-white shadow-xl bg-white overflow-hidden flex-shrink-0 relative">
+                {/* Profile Info Container */}
+                <div className="max-w-6xl mx-auto px-4 md:px-6 relative pb-10">
+                    {/* Header Row: Avatar & Stats */}
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 -mt-16 md:-mt-20 relative z-10">
+                        {/* Avatar (Overlaps Banner) */}
+                        <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-xl bg-white overflow-hidden flex-shrink-0 relative">
                             {profile.avatar_url ? (
                                 <img src={profile.avatar_url} alt={profile.full_name || 'User'} className="w-full h-full object-cover" />
                             ) : (
@@ -142,45 +143,45 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
                             )}
                         </div>
 
-                        {/* Nama & Info */}
-                        <div className="flex-1 pb-2">
-                            <div className="flex flex-wrap items-center gap-3 mb-1">
-                                <h1 className="text-3xl md:text-4xl font-black text-gray-900 capitalize tracking-tight">
-                                    {profile.full_name || 'Anonymous User'}
-                                </h1>
-                                {['breeder', 'admin', 'seller'].includes(profile.role?.toLowerCase()) && (
-                                    <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 border border-blue-100">
-                                        <ShieldCheck size={14} /> Terverifikasi
-                                    </span>
-                                )}
+                        {/* Statistik Singkat */}
+                        <div className="flex gap-3 md:gap-4 md:mb-2 w-full md:w-auto mt-2 md:mt-0">
+                            <div className="bg-white shadow-xl shadow-gray-200/50 rounded-2xl border border-gray-100 flex flex-col items-center justify-center flex-1 md:flex-none md:w-[160px] h-24 md:h-28 transition-all hover:-translate-y-1">
+                                <p className="text-2xl md:text-3xl font-black text-gray-900 leading-none">{kois.length}</p>
+                                <p className="text-[10px] md:text-xs text-gray-500 font-bold uppercase tracking-widest mt-2 text-center px-2">Koleksi Koi</p>
                             </div>
-                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 font-medium">
-                                <div className="flex items-center gap-1.5 uppercase tracking-wider text-orange-600">
-                                    <User size={16} />
-                                    {profile.role || 'Kolektor'}
-                                </div>
-                                {profile.address && (
-                                    <>
-                                        <span className="hidden md:inline text-gray-300">•</span>
-                                        <div className="flex items-center gap-1.5">
-                                            <MapPin size={16} />
-                                            {profile.address}
-                                        </div>
-                                    </>
-                                )}
+                            <div className="bg-white shadow-xl shadow-gray-200/50 rounded-2xl border border-gray-100 flex flex-col items-center justify-center flex-1 md:flex-none md:w-[160px] h-24 md:h-28 transition-all hover:-translate-y-1">
+                                <p className="text-2xl md:text-3xl font-black text-gray-900 leading-none">{wallets.length}</p>
+                                <p className="text-[10px] md:text-xs text-gray-500 font-bold uppercase tracking-widest mt-2 text-center px-2">Dompet Terhubung</p>
                             </div>
                         </div>
+                    </div>
 
-                        {/* Statistik Singkat */}
-                        <div className="flex gap-4 md:pb-2">
-                            <div className="bg-gray-50 px-6 py-3 rounded-2xl border border-gray-100 text-center">
-                                <p className="text-2xl font-black text-gray-900">{kois.length}</p>
-                                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mt-0.5">Koleksi Koi</p>
+                    {/* Nama & Info (Completely below banner) */}
+                    <div className="mt-5 md:mt-6 max-w-3xl">
+                        <div className="flex flex-wrap items-center gap-3 mb-3">
+                            <h1 className="text-3xl md:text-4xl font-black text-gray-900 capitalize tracking-tight">
+                                {profile.full_name || 'Anonymous User'}
+                            </h1>
+                            {['breeder', 'admin', 'seller'].includes(profile.role?.toLowerCase()) && (
+                                <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 border border-blue-100">
+                                    <ShieldCheck size={14} /> Terverifikasi
+                                </span>
+                            )}
+                        </div>
+                        <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 text-sm text-gray-500 font-medium leading-relaxed">
+                            <div className="inline-flex items-center gap-1.5 uppercase tracking-wider text-orange-600 font-bold bg-orange-50 px-3 py-1.5 rounded-full border border-orange-100 self-start">
+                                <User size={14} />
+                                {profile.role || 'Kolektor'}
                             </div>
-                            <div className="bg-gray-50 px-6 py-3 rounded-2xl border border-gray-100 text-center">
-                                <p className="text-2xl font-black text-gray-900">{wallets.length}</p>
-                                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mt-0.5">Dompet Terhubung</p>
-                            </div>
+                            {profile.address && (
+                                <>
+                                    <span className="hidden md:inline text-gray-300">•</span>
+                                    <div className="flex items-start md:items-center gap-1.5">
+                                        <MapPin size={16} className="flex-shrink-0 mt-0.5 md:mt-0 text-gray-400" />
+                                        <span>{profile.address}</span>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

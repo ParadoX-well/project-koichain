@@ -107,7 +107,7 @@ export default function NewsPage() {
                                     placeholder="Cari berita..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3 rounded-full border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition"
+                                    className="w-full pl-10 pr-4 py-3 rounded-full border border-gray-200 bg-white text-gray-900 placeholder-gray-400 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition shadow-sm"
                                 />
                             </div>
                         </div>

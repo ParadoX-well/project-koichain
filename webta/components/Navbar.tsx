@@ -59,9 +59,19 @@ export default function Navbar() {
 
         let mounted = true;
 
-        // getSession saat mount dihapus untuk mencegah deadlock dengan halaman (login/dll).
-        // onAuthStateChange secara otomatis menembakkan event INITIAL_SESSION saat pertama dipanggil.
-        // Listener perubahan atau initial event dari Supabase Auth
+        // Initial check cepat — dipanggil SEKALI saat mount saja (bukan visibilitychange)
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (!mounted) return;
+            if (session?.user) {
+                setUser(session.user);
+                loadUserProfile(session.user.id, session.user.email || '', session.user.user_metadata);
+            } else {
+                setUser(null);
+            }
+            setIsAuthChecking(false);
+        });
+
+        // Listener untuk perubahan auth (login/logout/token refresh)
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             if (!mounted) return;
             if (session?.user) {

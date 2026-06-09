@@ -50,19 +50,28 @@ export function WalletProvider({ children }: { children: ReactNode }) {
    * Validasi wallet ke database.
    * Jika wallet sudah dipakai akun LAIN, set walletConflict (tampilkan modal)
    * dan return false. Jika clear, set account dan return true.
+   *
+   * @param userId - Opsional. Jika diberikan (misal dari onAuthStateChange),
+   *                 TIDAK perlu panggil getSession() lagi → mencegah race condition.
    */
-  const validateAndSetAccount = async (address: string, silent = false): Promise<boolean> => {
+  const validateAndSetAccount = async (address: string, userId?: string, silent = false): Promise<boolean> => {
     const lowerAddr = address.toLowerCase();
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
+    // Tentukan userId: pakai parameter jika ada, kalau tidak baru ambil dari session
+    let currentUserId = userId;
+    if (!currentUserId) {
+      const { data: { session } } = await supabase.auth.getSession();
+      currentUserId = session?.user?.id;
+    }
+
+    if (currentUserId) {
       const { data: owner } = await supabase
         .from('user_wallets')
         .select('user_id')
         .eq('wallet_address', lowerAddr)
         .maybeSingle();
 
-      if (owner && owner.user_id !== session.user.id) {
+      if (owner && owner.user_id !== currentUserId) {
         // Wallet milik orang lain — tampilkan modal konfirmasi
         setWalletConflict({ address: lowerAddr, ownerUserId: owner.user_id });
         setAccount(null);
@@ -75,15 +84,21 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     return true;
   };
 
-  // Cek koneksi saat refresh halaman
+  // Cek koneksi wallet saat halaman dimuat + listener perubahan
   useEffect(() => {
+    // --- 1. Cek wallet yang sudah terkoneksi saat mount ---
     const checkConnection = async () => {
       if (typeof window !== 'undefined' && window.ethereum) {
+        // Cek apakah user sebelumnya sengaja disconnect / logout
+        const isConnected = localStorage.getItem('wallet_connected');
+        if (isConnected !== 'true') return;
+
         try {
           // eth_accounts = TIDAK meminta permission, hanya cek yang sudah ada
           const accounts = await window.ethereum.request({ method: 'eth_accounts' });
           if (accounts.length > 0) {
-            await validateAndSetAccount(accounts[0], true);
+            // Saat mount, belum tahu userId → biarkan getSession() dipanggil
+            await validateAndSetAccount(accounts[0]);
           }
         } catch (error) {
           console.error("Gagal cek koneksi wallet:", error);
@@ -93,41 +108,31 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
     checkConnection();
 
-    // Re-check koneksi saat pindah tab/aplikasi (sangat penting untuk MetaMask Mobile)
-    const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'visible' && typeof window !== 'undefined' && window.ethereum) {
-        try {
-          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-          if (accounts && accounts.length > 0) {
-            await validateAndSetAccount(accounts[0], true);
-          }
-        } catch (e) {
-          console.error(e);
-        }
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    // Re-validasi saat sesi auth berubah (login/logout)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
+    // --- 2. Listener auth Supabase (login/logout/token refresh) ---
+    // CATATAN: TIDAK ada visibilitychange listener di sini!
+    // Alasan: visibilitychange + getSession() secara bersamaan dari beberapa komponen
+    // (Navbar, WalletContext, halaman) menyebabkan deadlock di @supabase/ssr.
+    // Wallet state sudah cukup ditangani oleh:
+    //   - accountsChanged (MetaMask sendiri yang memberitahu jika ada perubahan)
+    //   - onAuthStateChange (Supabase yang memberitahu jika sesi berubah)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
         setAccount(null);
         setIsAdmin(false);
         setWalletConflict(null);
-      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        // Re-check wallet setelah login
-        if (typeof window !== 'undefined' && window.ethereum) {
-          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-          if (accounts.length > 0) {
-            await validateAndSetAccount(accounts[0], true);
-          }
-        }
+        localStorage.removeItem('wallet_connected');
       }
+      // Kita HAPUS blok SIGNED_IN yang memanggil MetaMask (window.ethereum.request).
+      // Alasan 1: Agar Supabase TIDAK macet (deadlock) menunggu response MetaMask saat pindah aplikasi.
+      // Alasan 2: Sesuai permintaan, saat user login ulang, wallet tidak otomatis terhubung.
+      //           User harus menekan tombol "Connect Wallet" secara manual.
     });
 
-    // Listener jika user ganti akun di MetaMask
+    // --- 3. Listener jika user ganti akun di MetaMask ---
+    let handleAccountsChanged: ((accounts: string[]) => void) | null = null;
+
     if (typeof window !== 'undefined' && window.ethereum) {
-      const handleAccountsChanged = async (accounts: string[]) => {
+      handleAccountsChanged = async (accounts: string[]) => {
         if (accounts.length > 0) {
           const success = await validateAndSetAccount(accounts[0]);
           if (success) toast.success("Akun Wallet Diganti");
@@ -136,7 +141,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           try {
             const doubleCheck = await window.ethereum.request({ method: 'eth_accounts' });
             if (doubleCheck && doubleCheck.length > 0) {
-              await validateAndSetAccount(doubleCheck[0], true);
+              await validateAndSetAccount(doubleCheck[0], undefined, true);
             } else {
               setAccount(null);
               setIsAdmin(false);
@@ -149,15 +154,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         }
       };
       window.ethereum.on('accountsChanged', handleAccountsChanged);
-      return () => {
-        subscription.unsubscribe();
-        window.ethereum?.removeListener?.('accountsChanged', handleAccountsChanged);
-      };
     }
 
+    // --- CLEANUP: Satu return statement yang bersihkan SEMUA listener ---
     return () => {
       subscription.unsubscribe();
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (handleAccountsChanged && typeof window !== 'undefined' && window.ethereum) {
+        window.ethereum.removeListener?.('accountsChanged', handleAccountsChanged);
+      }
     };
   }, []);
 
@@ -187,7 +191,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       const walletAddress = accounts[0];
 
       const success = await validateAndSetAccount(walletAddress);
-      if (success) toast.success("Wallet Terhubung!");
+      if (success) {
+        localStorage.setItem('wallet_connected', 'true');
+        toast.success("Wallet Terhubung!");
+      }
 
     } catch (err: any) {
       if (err.code === 4001) {
@@ -202,6 +209,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const disconnectWallet = () => {
     setAccount(null);
     setIsAdmin(false);
+    localStorage.removeItem('wallet_connected');
     toast("Wallet Terputus", { icon: "👋" });
   };
 
