@@ -19,9 +19,6 @@ export default function AdminReportsPage() {
   const fetchReports = async () => {
     setLoading(true);
     
-    // Pastikan session sudah siap sebelum request agar tidak diblokir RLS
-    await supabase.auth.getSession();
-    
     const { data, error } = await supabase
       .from('reports')
       .select('*')

@@ -59,22 +59,8 @@ export default function Navbar() {
 
         let mounted = true;
 
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (!mounted) return;
-            if (session?.user) {
-                setUser(session.user);
-                loadUserProfile(session.user.id, session.user.email || '', session.user.user_metadata);
-            } else {
-                setUser(null);
-                setRole('user');
-                setDisplayName('');
-                setAvatarUrl('');
-                setNotifications([]);
-                setUnreadCount(0);
-            }
-            setIsAuthChecking(false);
-        });
-
+        // getSession saat mount dihapus untuk mencegah deadlock dengan halaman (login/dll).
+        // onAuthStateChange secara otomatis menembakkan event INITIAL_SESSION saat pertama dipanggil.
         // Listener perubahan atau initial event dari Supabase Auth
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             if (!mounted) return;
@@ -92,17 +78,9 @@ export default function Navbar() {
             setIsAuthChecking(false);
         });
 
-        // 3. Listener saat Tab Bangun Tidur (Visibility Change)
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
-                supabase.auth.getSession().then(({ data: { session } }) => {
-                    if (session?.user) {
-                        loadUserProfile(session.user.id, session.user.email || '', session.user.user_metadata);
-                    }
-                });
-            }
-        };
-        document.addEventListener("visibilitychange", handleVisibilityChange);
+        // Listener visibilitychange di Navbar dihapus untuk mencegah tabrakan/deadlock 
+        // dengan WalletContext saat pindah aplikasi. Supabase onAuthStateChange sudah cukup 
+        // untuk menangani sinkronisasi sesi.
 
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -117,7 +95,6 @@ export default function Navbar() {
         return () => {
             mounted = false;
             subscription.unsubscribe();
-            document.removeEventListener("visibilitychange", handleVisibilityChange);
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, []);

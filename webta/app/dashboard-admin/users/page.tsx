@@ -62,9 +62,6 @@ export default function AdminUsersPage() {
   const fetchData = async () => {
     setLoading(true);
 
-    // FIX: Dobrak status Auth dulu supaya antrian request database tidak hang
-    await supabase.auth.getSession();
-
     // Tarik data secara paralel
     const [resAll, resReqs, resParts] = await Promise.all([
       supabase.from('profiles').select('*').order('created_at', { ascending: false }),

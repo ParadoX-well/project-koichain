@@ -10,9 +10,7 @@ export default function PartnerShowcase() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchPartners = async () => {
-            // FIX: Dobrak status Auth dulu supaya antrian request database tidak hang
-            await supabase.auth.getSession();
+        async function fetchPartners() {
 
             const { data: profiles } = await supabase
                 .from('profiles')
