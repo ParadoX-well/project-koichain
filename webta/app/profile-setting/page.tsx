@@ -39,8 +39,23 @@ export default function ProfileSetting() {
     bannerUrl: '',
     isVerified: false,
     isBanned: false,
+    storeName: '',
+    storeAddress: '',
+    contactPhone: '',
+    contactEmail: '',
+    storeDescription: '',
+    instagram: '',
   });
   const [draft, setDraft] = useState({ fullName: '', phone: '', address: '' });
+  const [storeDraft, setStoreDraft] = useState({
+    storeName: '',
+    storeAddress: '',
+    contactPhone: '',
+    contactEmail: '',
+    storeDescription: '',
+    instagram: '',
+  });
+  const [savingStore, setSavingStore] = useState(false);
   const [userWallets, setUserWallets] = useState<any[]>([]);
 
   const roleConf = ROLE_CONFIG[profile.role] || ROLE_CONFIG.user;
@@ -71,9 +86,23 @@ export default function ProfileSetting() {
           bannerUrl: p.banner_url || '',
           isVerified: isPartner,
           isBanned: p.is_banned || false,
+          storeName: p.store_name || '',
+          storeAddress: p.store_address || '',
+          contactPhone: p.contact_phone || '',
+          contactEmail: p.contact_email || '',
+          storeDescription: p.store_description || '',
+          instagram: p.instagram || '',
         };
         setProfile(data);
         setDraft({ fullName: data.fullName, phone: data.phone, address: data.address });
+        setStoreDraft({
+          storeName: data.storeName,
+          storeAddress: data.storeAddress,
+          contactPhone: data.contactPhone,
+          contactEmail: data.contactEmail,
+          storeDescription: data.storeDescription,
+          instagram: data.instagram,
+        });
 
         const { data: wals } = await supabase.from('user_wallets').select('*').eq('user_id', authUser.id).order('created_at', { ascending: true });
         setUserWallets(wals || []);
@@ -165,6 +194,30 @@ export default function ProfileSetting() {
       toast.error(err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveStoreData = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingStore(true);
+    try {
+      const { error } = await supabase.from('profiles').update({
+        store_name: storeDraft.storeName,
+        store_address: storeDraft.storeAddress,
+        contact_phone: storeDraft.contactPhone,
+        contact_email: storeDraft.contactEmail,
+        store_description: storeDraft.storeDescription,
+        instagram: storeDraft.instagram,
+        updated_at: new Date(),
+      }).eq('id', userId);
+      if (error) throw error;
+
+      setProfile(prev => ({ ...prev, ...storeDraft }));
+      toast.success('Data Usaha berhasil disimpan! ✅');
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setSavingStore(false);
     }
   };
 
@@ -363,7 +416,7 @@ export default function ProfileSetting() {
             {/* Form Edit Profil */}
             <form onSubmit={handleSaveProfile} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                <h2 className="font-bold text-gray-900 flex items-center gap-2"><Edit3 size={16} /> Edit Profil</h2>
+                <h2 className="font-bold text-gray-900 flex items-center gap-2"><Edit3 size={16} /> Edit Profil Pribadi</h2>
               </div>
 
               <div className="p-6 space-y-5">
@@ -434,6 +487,116 @@ export default function ProfileSetting() {
                 </button>
               </div>
             </form>
+
+            {/* Form Edit Data Toko / Usaha Khusus Mitra */}
+            {profile.isVerified && (
+              <form onSubmit={handleSaveStoreData} className="bg-white rounded-2xl shadow-sm border border-orange-100 overflow-hidden mt-6">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-orange-100 bg-orange-50/50">
+                  <h2 className="font-bold text-orange-900 flex items-center gap-2"><Edit3 size={16} className="text-orange-600" /> Data Toko / Usaha</h2>
+                </div>
+
+                <div className="p-6 space-y-5">
+                  <div className="grid md:grid-cols-2 gap-5">
+                    {/* Nama Toko */}
+                    <div className="col-span-2 md:col-span-1">
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Nama Toko / Usaha</label>
+                      <input
+                        type="text"
+                        value={storeDraft.storeName}
+                        onChange={e => setStoreDraft({ ...storeDraft, storeName: e.target.value })}
+                        placeholder="Nama Toko/Farm"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
+                      />
+                    </div>
+
+                    {/* Email Toko */}
+                    <div className="col-span-2 md:col-span-1">
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Email Toko</label>
+                      <div className="relative">
+                        <Mail size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                          type="email"
+                          value={storeDraft.contactEmail}
+                          onChange={e => setStoreDraft({ ...storeDraft, contactEmail: e.target.value })}
+                          placeholder="emailtoko@example.com"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Nomor HP Toko */}
+                    <div className="col-span-2 md:col-span-1">
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Nomor HP / WA Toko</label>
+                      <div className="relative">
+                        <Phone size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                          type="text"
+                          value={storeDraft.contactPhone}
+                          onChange={e => setStoreDraft({ ...storeDraft, contactPhone: e.target.value })}
+                          placeholder="08xxxxxxxxxx"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Instagram */}
+                    <div className="col-span-2 md:col-span-1">
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Username Instagram</label>
+                      <div className="relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">@</span>
+                        <input
+                          type="text"
+                          value={storeDraft.instagram?.replace('@', '')}
+                          onChange={e => setStoreDraft({ ...storeDraft, instagram: e.target.value })}
+                          placeholder="username"
+                          className="w-full pl-9 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Alamat Toko */}
+                    <div className="col-span-2">
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Alamat Toko</label>
+                      <div className="relative">
+                        <MapPin size={15} className="absolute left-4 top-4 text-gray-400" />
+                        <textarea
+                          rows={2}
+                          value={storeDraft.storeAddress}
+                          onChange={e => setStoreDraft({ ...storeDraft, storeAddress: e.target.value })}
+                          placeholder="Alamat lengkap toko..."
+                          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition resize-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Deskripsi Toko */}
+                    <div className="col-span-2">
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Deskripsi Toko</label>
+                      <textarea
+                        rows={3}
+                        value={storeDraft.storeDescription}
+                        onChange={e => setStoreDraft({ ...storeDraft, storeDescription: e.target.value })}
+                        placeholder="Ceritakan tentang toko/farm kamu..."
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition resize-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer Aksi Data Toko */}
+                <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50">
+                  <p className="text-xs text-gray-400">Data toko akan ditampilkan di profil publik dan direktori mitra.</p>
+                  <button
+                    type="submit"
+                    disabled={savingStore}
+                    className="flex items-center gap-2 bg-orange-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-orange-700 disabled:opacity-60 transition shadow"
+                  >
+                    {savingStore ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                    {savingStore ? 'Menyimpan...' : 'Simpan Data Toko'}
+                  </button>
+                </div>
+              </form>
+            )}
 
             {/* Banner Upload Khusus Mitra */}
             {profile.isVerified && (

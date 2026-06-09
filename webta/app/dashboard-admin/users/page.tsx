@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { CheckCircle, XCircle, Search, Loader2, ArrowLeft, ArrowRight, ShieldCheck, Ban, UserX, UserCheck, Trash2, Mail, Users, Filter, CheckCircle2, AlertTriangle, Briefcase, Store, Phone, Instagram, Clock, ShieldOff, X, Check, User } from 'lucide-react';
+import { CheckCircle, XCircle, Search, Loader2, ArrowLeft, ArrowRight, ShieldCheck, Ban, UserX, UserCheck, Trash2, Mail, Users, Filter, CheckCircle2, AlertTriangle, Briefcase, Store, Phone, Instagram, Clock, ShieldOff, X, Check, User, MapPin } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import BackButton from '@/components/BackButton';
@@ -480,43 +480,97 @@ export default function AdminUsersPage() {
               <button onClick={() => setSelectedPartner(null)} className="p-2 rounded-full hover:bg-gray-200 transition text-gray-500"><X size={18} /></button>
             </div>
             <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
-              <div className="grid md:grid-cols-2 gap-4 text-sm">
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                  <p className="text-xs text-gray-400 font-bold uppercase mb-1">Nama Bisnis</p>
-                  <p className="font-semibold text-gray-900 flex items-center gap-2"><Store size={14} className="text-blue-500" />{selectedPartner.store_name || '-'}</p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                  <p className="text-xs text-gray-400 font-bold uppercase mb-1">Email Kontak</p>
-                  <p className="font-semibold text-gray-900 flex items-center gap-2"><Mail size={14} className="text-blue-500" />{selectedPartner.contact_email || '-'}</p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                  <p className="text-xs text-gray-400 font-bold uppercase mb-1">No. Telepon / WA</p>
-                  <p className="font-semibold text-gray-900 flex items-center gap-2"><Phone size={14} className="text-blue-500" />{selectedPartner.contact_phone || '-'}</p>
-                </div>
-                {selectedPartner.instagram && (
+              
+              {/* DATA PRIBADI (PEMILIK) */}
+              <div>
+                <h3 className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3">Data Pribadi / Akun</h3>
+                <div className="grid md:grid-cols-2 gap-4 text-sm">
                   <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <p className="text-xs text-gray-400 font-bold uppercase mb-1">Instagram</p>
-                    <p className="font-semibold text-blue-600 flex items-center gap-2"><Instagram size={14} />{selectedPartner.instagram}</p>
+                    <p className="text-xs text-gray-400 font-bold uppercase mb-1">Nama Lengkap</p>
+                    <p className="font-semibold text-gray-900 flex items-center gap-2"><User size={14} className="text-gray-500" />{selectedPartner.full_name || '-'}</p>
                   </div>
-                )}
-                <div className="md:col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                  <p className="text-xs text-gray-400 font-bold uppercase mb-1">Alamat Lengkap</p>
-                  <p className="font-medium text-gray-800 text-sm">{selectedPartner.store_address || '-'}</p>
-                </div>
-                <div className="md:col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                  <p className="text-xs text-gray-400 font-bold uppercase mb-1">Deskripsi Bisnis</p>
-                  <p className="italic text-gray-600 text-sm">{selectedPartner.store_description || 'Tidak ada deskripsi.'}</p>
+                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <p className="text-xs text-gray-400 font-bold uppercase mb-1">No. HP Pribadi</p>
+                    <p className="font-semibold text-gray-900 flex items-center gap-2"><Phone size={14} className="text-gray-500" />{selectedPartner.phone || '-'}</p>
+                  </div>
+                  <div className="md:col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <p className="text-xs text-gray-400 font-bold uppercase mb-1">Alamat Domisili</p>
+                    <p className="font-medium text-gray-800 text-sm flex items-start gap-2"><MapPin size={14} className="text-gray-500 mt-0.5 shrink-0" />{selectedPartner.address || '-'}</p>
+                  </div>
                 </div>
               </div>
-              {selectedPartner.ktp_url && (
-                <div>
-                  <p className="text-xs text-gray-400 font-bold uppercase mb-2 text-center">Dokumen KTP Terverifikasi</p>
-                  <a href={selectedPartner.ktp_url} target="_blank" rel="noreferrer" className="block relative rounded-xl overflow-hidden group border border-gray-200">
-                    <img src={selectedPartner.ktp_url} alt="KTP" className="w-full h-48 object-contain bg-gray-100 group-hover:scale-105 transition duration-500" />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition text-white text-xs font-bold">Klik untuk Perbesar</div>
-                  </a>
+
+              {/* DATA BISNIS (TOKO/FARM) */}
+              <div>
+                <h3 className="text-xs font-black text-blue-400 uppercase tracking-wider mb-3 mt-2">Data Toko / Bisnis</h3>
+                <div className="grid md:grid-cols-2 gap-4 text-sm">
+                  <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                    <p className="text-xs text-blue-400 font-bold uppercase mb-1">Nama Bisnis</p>
+                    <p className="font-semibold text-gray-900 flex items-center gap-2"><Store size={14} className="text-blue-500" />{selectedPartner.store_name || '-'}</p>
+                  </div>
+                  <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                    <p className="text-xs text-blue-400 font-bold uppercase mb-1">Email Kontak</p>
+                    <p className="font-semibold text-gray-900 flex items-center gap-2"><Mail size={14} className="text-blue-500" />{selectedPartner.contact_email || '-'}</p>
+                  </div>
+                  <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                    <p className="text-xs text-blue-400 font-bold uppercase mb-1">No. Telepon / WA Toko</p>
+                    <p className="font-semibold text-gray-900 flex items-center gap-2"><Phone size={14} className="text-blue-500" />{selectedPartner.contact_phone || '-'}</p>
+                  </div>
+                  {selectedPartner.instagram && (
+                    <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                      <p className="text-xs text-blue-400 font-bold uppercase mb-1">Instagram</p>
+                      <p className="font-semibold text-blue-600 flex items-center gap-2"><Instagram size={14} />{selectedPartner.instagram}</p>
+                    </div>
+                  )}
+                  <div className="md:col-span-2 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                    <p className="text-xs text-blue-400 font-bold uppercase mb-1">Alamat Toko</p>
+                    <p className="font-medium text-gray-800 text-sm flex items-start gap-2"><MapPin size={14} className="text-blue-500 mt-0.5 shrink-0" />{selectedPartner.store_address || '-'}</p>
+                  </div>
+                  <div className="md:col-span-2 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                    <p className="text-xs text-blue-400 font-bold uppercase mb-1">Deskripsi Bisnis</p>
+                    <p className="italic text-gray-600 text-sm">{selectedPartner.store_description || 'Tidak ada deskripsi.'}</p>
+                  </div>
                 </div>
-              )}
+              </div>
+              {/* DOKUMEN KYC */}
+              <div>
+                <h3 className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3 mt-4 border-t border-gray-100 pt-5">Dokumen Verifikasi (KYC)</h3>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 text-center">
+                    <p className="text-xs font-bold text-gray-500 mb-2">KTP Asli</p>
+                    {selectedPartner.ktp_url ? (
+                      <a href={selectedPartner.ktp_url} target="_blank" rel="noreferrer" className="block relative aspect-video rounded-lg overflow-hidden group border border-gray-200 shadow-sm">
+                        <img src={selectedPartner.ktp_url} alt="KTP" className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition text-white text-[10px] font-bold">Perbesar</div>
+                      </a>
+                    ) : (
+                      <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-400 border border-gray-200 border-dashed">Tidak ada file</div>
+                    )}
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 text-center">
+                    <p className="text-xs font-bold text-gray-500 mb-2">Selfie dengan KTP</p>
+                    {selectedPartner.ktp_selfie_url ? (
+                      <a href={selectedPartner.ktp_selfie_url} target="_blank" rel="noreferrer" className="block relative aspect-video rounded-lg overflow-hidden group border border-gray-200 shadow-sm">
+                        <img src={selectedPartner.ktp_selfie_url} alt="Selfie KTP" className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition text-white text-[10px] font-bold">Perbesar</div>
+                      </a>
+                    ) : (
+                      <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-400 border border-gray-200 border-dashed">Tidak ada file</div>
+                    )}
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 text-center">
+                    <p className="text-xs font-bold text-gray-500 mb-2">Foto Toko/Farm</p>
+                    {selectedPartner.farm_photo_url ? (
+                      <a href={selectedPartner.farm_photo_url} target="_blank" rel="noreferrer" className="block relative aspect-video rounded-lg overflow-hidden group border border-gray-200 shadow-sm">
+                        <img src={selectedPartner.farm_photo_url} alt="Foto Farm" className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition text-white text-[10px] font-bold">Perbesar</div>
+                      </a>
+                    ) : (
+                      <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-400 border border-gray-200 border-dashed">Tidak ada file</div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => handleDeleteUser(selectedPartner.id, selectedPartner.full_name)} disabled={isDeleting} className="px-4 py-2 text-sm font-bold text-red-600 border border-red-200 rounded-xl hover:bg-red-50 transition flex items-center gap-2 disabled:opacity-50"><Trash2 size={14} /> Hapus</button>

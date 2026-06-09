@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Search, Store, MapPin, BadgeCheck, Instagram, ArrowRight, ShieldCheck, Trophy, Medal, Award } from 'lucide-react';
+import { Search, Store, MapPin, BadgeCheck, Instagram, ArrowRight, ShieldCheck, Trophy, Medal, Award, Phone } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import BackButton from '@/components/BackButton';
@@ -255,10 +255,16 @@ export default function MitraCatalog() {
 
                                     {/* Text Content */}
                                     <h2 className="text-xl font-bold text-gray-900 group-hover:text-orange-600 transition truncate mt-2">{p.store_name || p.full_name}</h2>
-                                    <p className="text-sm font-medium text-gray-500 mb-4 truncate">{p.full_name}</p>
+                                    {p.store_name && (
+                                        <p className="text-sm font-medium text-gray-500 mb-4 truncate">{p.full_name}</p>
+                                    )}
+                                    {!p.store_name && (
+                                        <div className="mb-4"></div>
+                                    )}
 
                                     <div className="space-y-2 mb-6 text-sm text-gray-600">
-                                        <div className="flex items-center gap-2"><MapPin size={16} className="text-gray-400 shrink-0" /> <span className="truncate">{p.store_address || 'Alamat tidak tersedia'}</span></div>
+                                        <div className="flex items-center gap-2"><MapPin size={16} className="text-gray-400 shrink-0" /> <span className="truncate">{p.store_address || p.address || 'Alamat tidak tersedia'}</span></div>
+                                        {p.contact_phone && <div className="flex items-center gap-2"><Phone size={16} className="text-gray-400 shrink-0" /> <span className="truncate">{p.contact_phone}</span></div>}
                                         {p.instagram && <div className="flex items-center gap-2"><Instagram size={16} className="text-gray-400 shrink-0" /> <span className="truncate">{p.instagram}</span></div>}
                                         <div className="flex items-center gap-2 text-orange-600 font-bold mt-2">
                                             <Store size={16} className="shrink-0" /> <span>{p.koi_count} Koleksi Koi Tersertifikasi</span>

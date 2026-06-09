@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
-import { User, MapPin, Search, Ruler, ShieldCheck, Mail, Fish, Calendar, ArrowLeft, Tag } from 'lucide-react';
+import { User, MapPin, Search, Ruler, ShieldCheck, Mail, Fish, Calendar, ArrowLeft, Tag, Phone, Instagram } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import ImageLightbox from '@/components/ImageLightbox';
 
@@ -158,31 +158,72 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
 
                     {/* Nama & Info (Completely below banner) */}
                     <div className="mt-5 md:mt-6 max-w-3xl">
-                        <div className="flex flex-wrap items-center gap-3 mb-3">
-                            <h1 className="text-3xl md:text-4xl font-black text-gray-900 capitalize tracking-tight">
-                                {profile.full_name || 'Anonymous User'}
-                            </h1>
-                            {['breeder', 'admin', 'seller'].includes(profile.role?.toLowerCase()) && (
-                                <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 border border-blue-100">
-                                    <ShieldCheck size={14} /> Terverifikasi
-                                </span>
-                            )}
-                        </div>
-                        <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 text-sm text-gray-500 font-medium leading-relaxed">
-                            <div className="inline-flex items-center gap-1.5 uppercase tracking-wider text-orange-600 font-bold bg-orange-50 px-3 py-1.5 rounded-full border border-orange-100 self-start">
-                                <User size={14} />
-                                {profile.role || 'Kolektor'}
-                            </div>
-                            {profile.address && (
+                        {(() => {
+                            const isMitra = profile.role && (profile.role.toLowerCase().includes('breeder') || profile.role.toLowerCase().includes('seller') || profile.role.toLowerCase().includes('admin'));
+                            return (
                                 <>
-                                    <span className="hidden md:inline text-gray-300">•</span>
-                                    <div className="flex items-start md:items-center gap-1.5">
-                                        <MapPin size={16} className="flex-shrink-0 mt-0.5 md:mt-0 text-gray-400" />
-                                        <span>{profile.address}</span>
+                                    <div className="flex flex-wrap items-center gap-3 mb-1">
+                                        <h1 className="text-3xl md:text-4xl font-black text-gray-900 capitalize tracking-tight">
+                                            {isMitra && profile.store_name 
+                                                ? profile.store_name 
+                                                : profile.full_name || 'Anonymous User'}
+                                        </h1>
+                                        {isMitra && (
+                                            <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 border border-blue-100">
+                                                <ShieldCheck size={14} /> Terverifikasi
+                                            </span>
+                                        )}
                                     </div>
+                                    
+                                    {isMitra && profile.store_name && (
+                                        <p className="text-gray-500 mb-3 text-sm font-semibold">Owner: {profile.full_name}</p>
+                                    )}
+
+                                    <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 text-sm text-gray-500 font-medium leading-relaxed mb-4">
+                                        <div className="inline-flex items-center gap-1.5 uppercase tracking-wider text-orange-600 font-bold bg-orange-50 px-3 py-1.5 rounded-full border border-orange-100 self-start">
+                                            <User size={14} />
+                                            {profile.role || 'Kolektor'}
+                                        </div>
+                                        {((isMitra && profile.store_address) || profile.address) && (
+                                            <>
+                                                <span className="hidden md:inline text-gray-300">•</span>
+                                                <div className="flex items-start md:items-center gap-1.5">
+                                                    <MapPin size={16} className="flex-shrink-0 mt-0.5 md:mt-0 text-gray-400" />
+                                                    <span>{isMitra && profile.store_address ? profile.store_address : profile.address}</span>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {/* TOMBOL KONTAK (Hanya untuk Mitra) */}
+                                    {isMitra && (
+                                        <div className="mt-6 mb-6">
+                                            {profile.store_description && (
+                                                <p className="text-gray-600 italic mb-5 border-l-4 border-orange-300 pl-4 py-1">{profile.store_description}</p>
+                                            )}
+                                            
+                                            <div className="flex flex-wrap gap-3">
+                                                {profile.contact_phone && (
+                                                    <a href={`https://wa.me/${profile.contact_phone.replace(/^0/, '62')}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-[#25D366] text-white px-5 py-2.5 rounded-xl font-bold hover:bg-[#20bd5a] transition shadow-md hover:-translate-y-0.5">
+                                                        <Phone size={18} /> Chat WhatsApp
+                                                    </a>
+                                                )}
+                                                {profile.instagram && (
+                                                    <a href={`https://instagram.com/${profile.instagram.replace('@', '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-5 py-2.5 rounded-xl font-bold hover:opacity-90 transition shadow-md hover:-translate-y-0.5">
+                                                        <Instagram size={18} /> Instagram
+                                                    </a>
+                                                )}
+                                                {profile.contact_email && (
+                                                    <a href={`mailto:${profile.contact_email}`} className="flex items-center gap-2 bg-white text-gray-700 border border-gray-200 px-5 py-2.5 rounded-xl font-bold hover:bg-gray-50 transition shadow-sm hover:-translate-y-0.5">
+                                                        <Mail size={18} /> Email Bisnis
+                                                    </a>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </>
-                            )}
-                        </div>
+                            );
+                        })()}
                     </div>
                 </div>
             </div>

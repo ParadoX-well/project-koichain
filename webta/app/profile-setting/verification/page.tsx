@@ -22,6 +22,9 @@ function VerificationContent() {
 
     // State Form Lengkap
     const [formData, setFormData] = useState({
+        personalName: '',
+        personalAddress: '',
+        personalPhone: '',
         storeName: '',
         storeAddress: '',
         storeDescription: '',
@@ -46,14 +49,17 @@ function VerificationContent() {
             const { data } = await supabase.from('profiles').select('*').eq('id', authUser.id).single();
             if (data) {
                 setProfile(data);
-                // Pre-fill data jika ada (Sinkronisasi dengan Profile Utama)
+                // Pre-fill data jika ada
                 setFormData(prev => ({
                     ...prev,
-                    storeName: data.store_name || data.full_name || '',
-                    storeAddress: data.store_address || data.address || '',
+                    personalName: data.full_name || '',
+                    personalAddress: data.address || '',
+                    personalPhone: data.phone || '',
+                    storeName: data.store_name || '',
+                    storeAddress: data.store_address || '',
                     storeDescription: data.store_description || '',
                     contactEmail: data.contact_email || authUser.email || '',
-                    contactPhone: data.contact_phone || data.phone || '',
+                    contactPhone: data.contact_phone || '',
                     instagram: data.instagram || ''
                 }));
 
@@ -77,8 +83,8 @@ function VerificationContent() {
         if (!profile?.store_name) {
             setFormData(prev => ({
                 ...prev,
-                storeName: profile?.full_name || '',
-                storeAddress: profile?.address || '',
+                storeName: '',
+                storeAddress: '',
                 storeDescription: ''
             }));
         }
@@ -100,8 +106,8 @@ function VerificationContent() {
     // Submit Form
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.storeName || !formData.storeAddress || !formData.contactEmail || !formData.contactPhone) {
-            toast.error("Mohon lengkapi Data Usaha dan Kontak!");
+        if (!formData.personalName || !formData.personalAddress || !formData.personalPhone || !formData.storeName || !formData.storeAddress || !formData.contactEmail || !formData.contactPhone) {
+            toast.error("Mohon lengkapi Data Pemilik, Data Usaha, dan Kontak!");
             return;
         }
         // KTP Wajib jika belum ada di database
@@ -138,10 +144,10 @@ function VerificationContent() {
                 ktp_selfie_url: ktpSelfieUrl,
                 farm_photo_url: farmPhotoUrl,
                 
-                // SINKRONISASI: Simpan juga ke Profil Utama
-                full_name: formData.storeName,
-                address: formData.storeAddress,
-                phone: formData.contactPhone,
+                // Simpan untuk Profil Utama (Pribadi)
+                full_name: formData.personalName,
+                address: formData.personalAddress,
+                phone: formData.personalPhone,
                 
                 updated_at: new Date()
             };
@@ -379,9 +385,37 @@ function VerificationContent() {
 
                         <form onSubmit={handleSubmit} className="p-8 space-y-10">
 
+                            {/* DATA PEMILIK (PRIBADI) */}
+                            <div>
+                                <h4 className="text-sm font-black text-orange-600 uppercase mb-5 border-b-2 border-orange-100 pb-3 inline-block">1. Data Pemilik (Profil Akun)</h4>
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    <div className="col-span-2 md:col-span-1">
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">Nama Pemilik <span className="text-red-500">*</span></label>
+                                        <div className="relative">
+                                            <UserCheck className="absolute left-4 top-4 text-gray-400 w-5 h-5" />
+                                            <input required type="text" value={formData.personalName} onChange={(e) => setFormData({ ...formData, personalName: e.target.value })} className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:bg-white focus:border-orange-200 transition-all outline-none" placeholder="Nama Lengkap Sesuai KTP" />
+                                        </div>
+                                    </div>
+                                    <div className="col-span-2 md:col-span-1">
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">No. HP Pribadi <span className="text-red-500">*</span></label>
+                                        <div className="relative">
+                                            <Phone className="absolute left-4 top-4 text-gray-400 w-5 h-5" />
+                                            <input required type="text" value={formData.personalPhone} onChange={(e) => setFormData({ ...formData, personalPhone: e.target.value })} className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:bg-white focus:border-orange-200 transition-all outline-none" placeholder="0812xxx" />
+                                        </div>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">Alamat Pemilik (Domisili) <span className="text-red-500">*</span></label>
+                                        <div className="relative">
+                                            <MapPin className="absolute left-4 top-4 text-gray-400 w-5 h-5" />
+                                            <textarea required rows={2} value={formData.personalAddress} onChange={(e) => setFormData({ ...formData, personalAddress: e.target.value })} className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:bg-white focus:border-orange-200 transition-all outline-none resize-none" placeholder="Alamat rumah..." />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* IDENTITAS USAHA */}
                             <div>
-                                <h4 className="text-sm font-black text-orange-600 uppercase mb-5 border-b-2 border-orange-100 pb-3 inline-block">1. Identitas Usaha</h4>
+                                <h4 className="text-sm font-black text-orange-600 uppercase mb-5 border-b-2 border-orange-100 pb-3 inline-block">2. Identitas Usaha</h4>
                                 <div className="grid md:grid-cols-2 gap-6">
                                     <div className="col-span-2">
                                         <label className="block text-sm font-bold text-gray-700 mb-2">Nama Usaha <span className="text-red-500">*</span></label>
@@ -409,7 +443,7 @@ function VerificationContent() {
 
                             {/* KONTAK BISNIS */}
                             <div>
-                                <h4 className="text-sm font-black text-orange-600 uppercase mb-5 border-b-2 border-orange-100 pb-3 inline-block">2. Kontak Bisnis</h4>
+                                <h4 className="text-sm font-black text-orange-600 uppercase mb-5 border-b-2 border-orange-100 pb-3 inline-block">3. Kontak Bisnis</h4>
                                 <div className="grid md:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-sm font-bold text-gray-700 mb-2">Email Bisnis <span className="text-red-500">*</span></label>
@@ -437,7 +471,7 @@ function VerificationContent() {
 
                             {/* DOKUMEN */}
                             <div>
-                                <h4 className="text-sm font-black text-orange-600 uppercase mb-5 border-b-2 border-orange-100 pb-3 inline-block">3. Dokumen Validasi (KYC)</h4>
+                                <h4 className="text-sm font-black text-orange-600 uppercase mb-5 border-b-2 border-orange-100 pb-3 inline-block">4. Dokumen Validasi (KYC)</h4>
                                 
                                 <div className="grid md:grid-cols-3 gap-6">
                                     {/* KTP */}
