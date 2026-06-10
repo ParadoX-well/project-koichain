@@ -143,7 +143,7 @@ export default function Footer() {
       {/* Bagian Copyright */}
       <div className="border-t border-gray-800 bg-gray-950">
         <div className="container mx-auto px-6 py-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500">
-          <p>&copy; {currentYear} KoiChain ID. Dibuat oleh <span className="text-gray-400 font-medium">Andika Attar Fizrah</span>.</p>
+          <p>&copy; {currentYear} KoiChain ID. Dibuat oleh <span className="text-gray-400 font-medium">PT. DT Corp Asia Tbk</span>.</p>
           <div className="flex gap-6">
             <Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
             <Link href="/terms-of-service" className="hover:text-white transition-colors">Terms of Service</Link>

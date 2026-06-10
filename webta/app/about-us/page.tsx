@@ -140,8 +140,8 @@ export default function AboutUs() {
               <div className="w-20 h-20 bg-gradient-to-br from-gray-800 to-gray-900 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                 <Cpu className="text-white w-8 h-8" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900">Andika Attar Fizrah</h3>
-              <p className="text-orange-600 font-medium text-sm mt-1 mb-4">Founder & Lead Developer</p>
+              <h3 className="text-xl font-bold text-gray-900">PT. DT Corp Asia Tbk</h3>
+              <p className="text-orange-600 font-medium text-sm mt-1 mb-4">Perusahaan Pengembang</p>
               <p className="text-gray-500 text-sm max-w-sm mx-auto leading-relaxed">
                 Dikembangkan dengan dedikasi penuh untuk memajukan industri perikanan lokal ke ranah teknologi digital Web3.
               </p>
