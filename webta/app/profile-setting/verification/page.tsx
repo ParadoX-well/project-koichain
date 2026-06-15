@@ -198,7 +198,6 @@ function VerificationContent() {
             <div className="absolute top-40 -right-20 w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-[100px] opacity-30 pointer-events-none"></div>
 
             <Navbar />
-            <Toaster position="top-center" />
 
             <main className="max-w-5xl mx-auto px-6 py-12 relative z-10">
 

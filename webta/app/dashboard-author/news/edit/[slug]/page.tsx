@@ -103,12 +103,13 @@ export default function EditNewsPage() {
         init();
     }, [slugParam, authUser, router]);
 
-    // Auto-slug dari judul (jika belum diedit manual)
-    useEffect(() => {
-        if (!slugManuallyEdited && title) {
-            setSlug(toSlug(title));
+    const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newTitle = e.target.value;
+        setTitle(newTitle);
+        if (!slugManuallyEdited) {
+            setSlug(toSlug(newTitle));
         }
-    }, [title, slugManuallyEdited]);
+    };
 
     // Upload gambar inline ke Supabase Storage
     async function handleInlineImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -254,7 +255,6 @@ export default function EditNewsPage() {
     return (
         <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
             <Navbar />
-            <Toaster position="top-center" />
 
             <main className="max-w-3xl mx-auto px-4 py-10">
 
@@ -275,7 +275,7 @@ export default function EditNewsPage() {
                         <input
                             type="text"
                             value={title}
-                            onChange={(e) => setTitle(e.target.value)}
+                            onChange={handleTitleChange}
                             placeholder="Judul berita..."
                             className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-red-500 transition"
                         />

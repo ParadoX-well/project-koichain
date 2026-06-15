@@ -15,6 +15,7 @@ export default function Navbar() {
     const [avatarUrl, setAvatarUrl] = useState<string>('');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isNotifOpen, setIsNotifOpen] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [notifications, setNotifications] = useState<any[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
 
@@ -163,7 +164,12 @@ export default function Navbar() {
                 </span>
             </Link>
 
-            {/* DESKTOP NAV LINKS DIHAPUS SESUAI PERMINTAAN */}
+            {/* DESKTOP NAV LINKS */}
+            <div className="hidden md:flex items-center gap-6 text-sm font-bold text-gray-600">
+                <Link href="/" className="hover:text-orange-600 transition">Beranda</Link>
+                <Link href="/check" className="hover:text-orange-600 transition">Cek Sertifikat</Link>
+                <Link href="/report" className="hover:text-orange-600 transition">Lapor Bug</Link>
+            </div>
 
             <div className="flex items-center gap-2 sm:gap-4">
 
@@ -265,7 +271,7 @@ export default function Navbar() {
                         >
                             <div className="bg-white p-0.5 rounded-full shadow-sm border border-gray-100 w-8 h-8 flex items-center justify-center overflow-hidden">
                                 {avatarUrl ? (
-                                    <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+                                    <img src={avatarUrl} referrerPolicy="no-referrer" alt="Avatar" className="w-full h-full object-cover rounded-full" />
                                 ) : (
                                     <User className="w-5 h-5 text-gray-600" />
                                 )}
@@ -361,7 +367,23 @@ export default function Navbar() {
                         <span className="hidden sm:inline">Login</span>
                     </Link>
                 )}
+                {/* --- HAMBURGER MENU TOGGLE --- */}
+                <button
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    className="md:hidden p-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition"
+                >
+                    {isMobileMenuOpen ? <X size={24} /> : <div className="space-y-1.5"><div className="w-5 h-0.5 bg-current"></div><div className="w-5 h-0.5 bg-current"></div><div className="w-5 h-0.5 bg-current"></div></div>}
+                </button>
             </div>
+
+            {/* MOBILE MENU DROPDOWN */}
+            {isMobileMenuOpen && (
+                <div className="absolute top-full left-0 w-full bg-white border-b border-gray-200 shadow-xl md:hidden flex flex-col py-4 px-6 gap-4 z-40">
+                    <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-800 font-bold hover:text-orange-600">Beranda</Link>
+                    <Link href="/check" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-800 font-bold hover:text-orange-600">Cek Sertifikat</Link>
+                    <Link href="/report" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-800 font-bold hover:text-orange-600">Lapor Bug</Link>
+                </div>
+            )}
         </nav>
     );
 }

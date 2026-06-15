@@ -298,7 +298,6 @@ export default function ProfileSetting() {
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
       <Navbar />
-      <Toaster position="top-center" />
 
       <main className="max-w-5xl mx-auto px-4 py-10">
         <div className="flex flex-col lg:flex-row gap-6">
@@ -316,7 +315,7 @@ export default function ProfileSetting() {
                 <div className="relative w-24 h-24 mx-auto mb-4 group">
                   <div className="w-full h-full rounded-full overflow-hidden border-4 border-white shadow-lg bg-gray-100">
                     {profile.avatarUrl
-                      ? <img src={profile.avatarUrl} className="w-full h-full object-cover" alt="Avatar" />
+                      ? <img src={profile.avatarUrl} referrerPolicy="no-referrer" className="w-full h-full object-cover" alt="Avatar" />
                       : <div className="w-full h-full flex items-center justify-center text-gray-300"><User size={40} /></div>
                     }
                   </div>

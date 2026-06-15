@@ -12,7 +12,6 @@ import { ArrowLeft, Fish, Search, Loader2, ExternalLink, Baby, Calendar, Ruler, 
 export default function CollectionPage() {
   const router = useRouter();
   const [kois, setKois] = useState<any[]>([]);
-  const [filtered, setFiltered] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterSource, setFilterSource] = useState<'all' | 'manual' | 'spawning'>('all');
@@ -67,28 +66,21 @@ export default function CollectionPage() {
       }
 
       setKois(certsData);
-      setFiltered(certsData);
       setLoading(false);
     };
     init();
   }, [authUser, router]);
 
-  useEffect(() => {
-    let result = kois;
-
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter(k =>
-        k.koi_id?.toLowerCase().includes(q) ||
-        k.variety?.toLowerCase().includes(q)
-      );
-    }
-
-    if (filterSource === 'manual') result = result.filter(k => !k.spawning_session_id);
-    if (filterSource === 'spawning') result = result.filter(k => !!k.spawning_session_id);
-
-    setFiltered(result);
-  }, [search, filterSource, kois]);
+  let filtered = kois;
+  if (search.trim()) {
+    const q = search.toLowerCase();
+    filtered = filtered.filter(k =>
+      k.koi_id?.toLowerCase().includes(q) ||
+      k.variety?.toLowerCase().includes(q)
+    );
+  }
+  if (filterSource === 'manual') filtered = filtered.filter(k => !k.spawning_session_id);
+  if (filterSource === 'spawning') filtered = filtered.filter(k => !!k.spawning_session_id);
 
   const totalKois = kois.length;
   const fromSpawning = kois.filter(k => k.spawning_session_id).length;

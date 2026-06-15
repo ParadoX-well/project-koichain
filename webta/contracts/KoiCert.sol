@@ -116,7 +116,7 @@ contract KoiCert {
         address oldOwner = koi.currentOwner;
 
         koi.currentOwner = _newOwner;
-        koi.breeder = _newOwnerName; 
+        // CATATAN: koi.breeder TIDAK diubah agar tetap menyimpan nama peternak asal (immutable)
 
         if (_newSize > 0) koi.size = _newSize;
         if (bytes(_newAge).length > 0) koi.age = _newAge;

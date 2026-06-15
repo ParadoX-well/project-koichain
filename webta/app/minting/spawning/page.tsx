@@ -170,7 +170,6 @@ export default function SpawningPage() {
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
       <Navbar />
-      <Toaster position="top-center" />
       <main className="max-w-5xl mx-auto px-4 py-10">
         <BackButton />
 
@@ -212,12 +211,12 @@ export default function SpawningPage() {
                     <div className="flex items-center gap-2"><Calendar size={14} className="text-orange-400" /> {new Date(s.spawn_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
                     {s.location && <div className="flex items-center gap-2"><MapPin size={14} className="text-red-400" /> {s.location}</div>}
                     {s.spawning_fathers?.length > 0 && (
-                      <div className="flex items-start gap-2 col-span-2">
+                      <div className="flex items-start gap-2 md:col-span-2">
                         <Fish size={14} className="text-green-400 mt-0.5 shrink-0" />
                         <span>Ayah: {s.spawning_fathers.map((f: any) => <span key={f.father_koi_id} className="font-mono font-bold bg-green-50 border border-green-100 px-1.5 py-0.5 rounded text-xs mr-1">{f.father_koi_id}</span>)}</span>
                       </div>
                     )}
-                    {s.notes && <div className="col-span-2 italic text-gray-400 text-xs mt-1">📝 {s.notes}</div>}
+                    {s.notes && <div className="md:col-span-2 italic text-gray-400 text-xs mt-1">📝 {s.notes}</div>}
                   </div>
                 </div>
                 <div className="flex md:flex-col gap-2 items-center md:items-end justify-end shrink-0">

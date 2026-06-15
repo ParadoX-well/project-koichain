@@ -33,6 +33,9 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  console.log('[Middleware] pathname:', request.nextUrl.pathname);
+  console.log('[Middleware] Has user:', !!user);
+
   const { pathname } = request.nextUrl
 
   // Daftar rute yang harus dicegah jika belum login
@@ -43,6 +46,8 @@ export async function updateSession(request: NextRequest) {
     '/dashboard-mitra',
     '/dashboard-admin',
     '/minting',
+    '/transfer',
+    '/update-koi',
     '/update-password'
   ]
 

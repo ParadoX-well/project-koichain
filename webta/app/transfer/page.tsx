@@ -122,6 +122,25 @@ export default function TransferKoiPage() {
     }
   };
 
+  const handlePhotoChange = (e: any) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast.error("Format tidak valid! Hanya file gambar yang diperbolehkan.");
+        e.target.value = null;
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast.error("Ukuran file terlalu besar! Maksimal 5MB.");
+        e.target.value = null;
+        return;
+      }
+      setPhotoFile(file);
+    } else {
+      setPhotoFile(null);
+    }
+  };
+
   const uploadPhoto = async () => {
       if (!photoFile) return "";
       const fileName = `transfer/${Date.now()}-${photoFile.name}`;
@@ -330,7 +349,6 @@ export default function TransferKoiPage() {
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
       <Navbar />
-      <Toaster position="top-center" />
 
       <main className="max-w-4xl mx-auto px-4 py-10">
         
@@ -425,7 +443,7 @@ export default function TransferKoiPage() {
                             <div className="border-2 border-dashed border-gray-300 p-6 rounded-xl text-center hover:bg-white transition-colors cursor-pointer relative group bg-gray-50/50">
                                 <Upload className="mx-auto text-gray-400 group-hover:text-blue-500 transition-colors mb-2 w-6 h-6" />
                                 <span className="text-sm font-bold text-gray-600 block">{photoFile ? <span className="text-blue-600">{photoFile.name}</span> : "Pilih File Gambar..."}</span>
-                                <input type="file" accept="image/*" onChange={e => setPhotoFile(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer" />
+                                <input type="file" accept="image/*" onChange={handlePhotoChange} className="absolute inset-0 opacity-0 cursor-pointer" />
                             </div>
                         </div>
                     </div>

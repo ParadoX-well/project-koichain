@@ -18,21 +18,21 @@ export async function POST(request: Request) {
 
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-        // Cari user di listUsers (Membutuhkan SERVICE ROLE)
-        const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
-
-        if (authError || !authData || !authData.users) {
-             return NextResponse.json({ error: "Gagal mengakses data pengguna." }, { status: 500 });
-        }
-
         const targetEmail = email.toLowerCase().trim();
-        const foundUser = authData.users.find(u => u.email === targetEmail);
+        
+        // PENCARIAN O(1) TINGKAT ENTERPRISE: Langsung tembak ke tabel profiles berdasarkan email.
+        // Tabel profiles harus memiliki index UNIQUE untuk kolom 'email' (sudah diatur via SQL)
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, full_name, store_name')
+            .eq('email', targetEmail)
+            .single();
 
-        if (!foundUser) {
+        if (profileError || !profile) {
              return NextResponse.json({ error: "Pengguna dengan email tersebut tidak ditemukan." }, { status: 404 });
         }
 
-        const userId = foundUser.id;
+        const userId = profile.id;
 
         // Cari dompet utamanya
         const { data: wallets, error: walletError } = await supabase
@@ -47,14 +47,7 @@ export async function POST(request: Request) {
              return NextResponse.json({ error: "Pengguna ditemukan, tapi belum menautkan dompet Web3 MetaMask. Harap minta mereka login ke KoiChainID terlebih dahulu." }, { status: 404 });
         }
 
-        // Ambil nama dari profil
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('full_name, store_name')
-            .eq('id', userId)
-            .single();
-
-        const userName = profile?.store_name || profile?.full_name || 'Tanpa Nama';
+        const userName = profile.store_name || profile.full_name || 'Tanpa Nama';
 
         return NextResponse.json({ wallet_address: wallets.wallet_address, user_name: userName });
 

@@ -125,6 +125,30 @@ export default function UpdateKoiPage() {
     }
   };
 
+  const handleFileChange = (e: any, type: 'photo' | 'cert' | 'contest') => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (type === 'cert' && !file.type.startsWith('image/') && file.type !== 'application/pdf') {
+        toast.error("Format tidak valid! Hanya gambar atau PDF untuk sertifikat.");
+        e.target.value = null;
+        return;
+      }
+      if (type !== 'cert' && !file.type.startsWith('image/')) {
+        toast.error("Format tidak valid! Hanya file gambar yang diperbolehkan.");
+        e.target.value = null;
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast.error("Ukuran file terlalu besar! Maksimal 5MB.");
+        e.target.value = null;
+        return;
+      }
+      setFiles({ ...files, [type]: file });
+    } else {
+      setFiles({ ...files, [type]: null });
+    }
+  };
+
   const uploadToStorage = async (file: File) => {
     const fileName = `updates/${Date.now()}-${file.name}`;
     const { error } = await supabase.storage.from('koi-assets').upload(fileName, file);
@@ -303,7 +327,6 @@ export default function UpdateKoiPage() {
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
       <Navbar />
-      <Toaster position="top-center" />
 
       <main className="max-w-4xl mx-auto px-4 py-10">
         <BackButton />
@@ -361,7 +384,7 @@ export default function UpdateKoiPage() {
                                 {files.photo ? files.photo.name : "Pilih File JPG/PNG"}
                             </span>
                             <input type="file" className="hidden" accept="image/*" 
-                                onChange={(e) => setFiles({ ...files, photo: e.target.files?.[0] || null })} />
+                                onChange={(e) => handleFileChange(e, 'photo')} />
                         </label>
                     </div>
 
@@ -374,7 +397,7 @@ export default function UpdateKoiPage() {
                                 {files.cert ? files.cert.name : "Pilih File Sertifikat Asli (Jika Ada)"}
                             </span>
                             <input type="file" className="hidden" accept="image/*,application/pdf"
-                                onChange={(e) => setFiles({ ...files, cert: e.target.files?.[0] || null })} />
+                                onChange={(e) => handleFileChange(e, 'cert')} />
                         </label>
                     </div>
 
@@ -382,7 +405,7 @@ export default function UpdateKoiPage() {
                         <Upload className="mx-auto text-gray-400 group-hover:text-purple-500 transition-colors mb-3 w-8 h-8" />
                         <span className="text-base font-bold text-gray-700 block">Sertifikat Lomba Baru (Opsional)</span>
                         <span className="text-sm text-gray-400 block mt-1">{files.contest ? <span className="text-purple-600 font-medium">{files.contest.name}</span> : "Upload piagam jika baru menang kontes"}</span>
-                        <input type="file" accept="image/*" onChange={e => setFiles({...files, contest: e.target.files?.[0] || null})} className="absolute inset-0 opacity-0 cursor-pointer" />
+                        <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'contest')} className="absolute inset-0 opacity-0 cursor-pointer" />
                     </div>
                 </div>
 

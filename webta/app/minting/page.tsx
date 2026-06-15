@@ -90,7 +90,20 @@ export default function MintKoiPage() {
 
   const handleInputChange = (e: any) => setFormData({ ...formData, [e.target.name]: e.target.value });
   const handleFileChange = (e: any, type: 'photo' | 'cert' | 'contest') => {
-    if (e.target.files?.[0]) setFiles({ ...files, [type]: e.target.files[0] });
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast.error("Format tidak valid! Hanya file gambar yang diperbolehkan.");
+        e.target.value = null;
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast.error("Ukuran file terlalu besar! Maksimal 5MB.");
+        e.target.value = null;
+        return;
+      }
+      setFiles({ ...files, [type]: file });
+    }
   };
 
   const uploadToStorage = async (file: File, folder: string) => {
@@ -142,6 +155,20 @@ export default function MintKoiPage() {
         toast.error("Varietas Wajib Diisi!", { id: toastId });
         setProcessLoading(false);
         return;
+      }
+
+      // PRE-CHECK DUPLICATE ID (Validasi Database sebelum upload & bayar gas)
+      toast.loading("Memeriksa ketersediaan ID...", { id: toastId });
+      const { data: existingKoi } = await supabase
+          .from('koi_certificates')
+          .select('koi_id')
+          .eq('koi_id', formData.id)
+          .maybeSingle();
+          
+      if (existingKoi) {
+          toast.error("GAGAL: ID Koi tersebut sudah pernah didaftarkan!", { id: toastId });
+          setProcessLoading(false);
+          return;
       }
 
       // A. Upload File ke Supabase
@@ -270,7 +297,6 @@ export default function MintKoiPage() {
     return (
       <div className="min-h-screen flex flex-col bg-gray-50 font-sans text-gray-900">
         <Navbar />
-        <Toaster position="top-center" />
         <div className="flex-grow flex flex-col items-center justify-center p-4">
           <div className="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full text-center border border-gray-100">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -309,7 +335,6 @@ export default function MintKoiPage() {
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
       <Navbar />
-      <Toaster position="top-center" />
 
       <main className="max-w-5xl mx-auto px-4 py-10">
         <div className="mb-8">
@@ -359,8 +384,8 @@ export default function MintKoiPage() {
             </div>
             <div><label className="font-bold text-sm block mb-2">Umur</label><input name="age" onChange={handleInputChange} type="text" placeholder="Contoh: Sansai (3 Tahun)" className="w-full p-3 border rounded-xl" /></div>
             <div><label className="font-bold text-sm block mb-2">Ukuran (cm)</label><input required name="size" onChange={handleInputChange} type="number" placeholder="55" className="w-full p-3 border rounded-xl" /></div>
-            <div className="col-span-2"><label className="font-bold text-sm block mb-2">Kondisi</label><input required name="condition" onChange={handleInputChange} type="text" placeholder="Sehat, Body Bulky..." className="w-full p-3 border rounded-xl" /></div>
-            <div className="col-span-2"><label className="font-bold text-sm block mb-2">Catatan Awal (Traceability)</label><input required name="note" value={formData.note} onChange={handleInputChange} type="text" placeholder="Catatan awal ikan ini..." className="w-full p-3 border rounded-xl" /></div>
+            <div className="md:col-span-2"><label className="font-bold text-sm block mb-2">Kondisi</label><input required name="condition" onChange={handleInputChange} type="text" placeholder="Sehat, Body Bulky..." className="w-full p-3 border rounded-xl" /></div>
+            <div className="md:col-span-2"><label className="font-bold text-sm block mb-2">Catatan Awal (Traceability)</label><input required name="note" value={formData.note} onChange={handleInputChange} type="text" placeholder="Catatan awal ikan ini..." className="w-full p-3 border rounded-xl" /></div>
           </div>
 
           {/* FORM SILSILAH (LINEAGE) */}

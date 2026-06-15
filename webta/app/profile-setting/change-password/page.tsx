@@ -90,7 +90,6 @@ export default function ChangePasswordPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex font-sans text-gray-900">
-      <Toaster position="top-center" />
       
       <div className="flex-1 flex flex-col justify-center items-center p-6 relative">
         <div className="w-full max-w-md">

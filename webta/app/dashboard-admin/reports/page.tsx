@@ -10,7 +10,6 @@ import BackButton from '@/components/BackButton';
 
 export default function AdminReportsPage() {
   const [reports, setReports] = useState<any[]>([]);
-  const [filteredReports, setFilteredReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<any>(null); // Untuk modal detail
   const [filterStatus, setFilterStatus] = useState<string>('all'); // State untuk filter
@@ -29,8 +28,6 @@ export default function AdminReportsPage() {
       toast.error("Gagal mengambil data laporan.");
     } else {
       setReports(data || []);
-      setFilteredReports(data || []);
-    }
     setLoading(false);
   };
 
@@ -38,14 +35,7 @@ export default function AdminReportsPage() {
     fetchReports();
   }, []);
 
-  // Filter Effect
-  useEffect(() => {
-    if (filterStatus === 'all') {
-      setFilteredReports(reports);
-    } else {
-      setFilteredReports(reports.filter(r => r.status === filterStatus));
-    }
-  }, [filterStatus, reports]);
+  const filteredReports = filterStatus === 'all' ? reports : reports.filter(r => r.status === filterStatus);
 
   // Update Status Laporan
   const handleUpdateStatus = async (id: string, newStatus: string) => {
@@ -90,7 +80,6 @@ export default function AdminReportsPage() {
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
       <Navbar />
-      <Toaster position="top-center" />
 
       <main className="max-w-6xl mx-auto px-4 py-10">
         

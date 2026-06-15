@@ -104,7 +104,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex font-sans text-gray-900">
-      <Toaster position="top-center" />
 
       {/* PANEL KIRI — Dekorasi */}
       <div className="hidden lg:flex lg:w-[45%] bg-gradient-to-br from-orange-500 via-rose-500 to-pink-600 relative overflow-hidden flex-col items-center justify-center p-12 text-white">

@@ -72,7 +72,6 @@ export default function AuthorDashboard() {
     return (
         <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
             <div className="relative z-50"><Navbar /></div>
-            <Toaster position="top-center" />
 
             <main className="max-w-6xl mx-auto px-4 py-12 relative z-0">
                 {/* Header */}

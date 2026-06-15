@@ -71,12 +71,13 @@ export default function CreateNewsPage() {
             });
     }, [authUser, router]);
 
-    // Auto-slug dari judul (jika slug belum diedit manual)
-    useEffect(() => {
+    const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newTitle = e.target.value;
+        setTitle(newTitle);
         if (!slugManuallyEdited) {
-            setSlug(toSlug(title));
+            setSlug(toSlug(newTitle));
         }
-    }, [title, slugManuallyEdited]);
+    };
 
     // Upload gambar inline ke Supabase Storage
     async function handleInlineImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -187,7 +188,6 @@ export default function CreateNewsPage() {
     return (
         <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
             <Navbar />
-            <Toaster position="top-center" />
 
             <main className="max-w-3xl mx-auto px-4 py-10">
 
@@ -208,7 +208,7 @@ export default function CreateNewsPage() {
                         <input
                             type="text"
                             value={title}
-                            onChange={(e) => setTitle(e.target.value)}
+                            onChange={handleTitleChange}
                             placeholder="Contoh: Grand Champion Kohaku Menang di All Japan Koi Show 2025"
                             className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-red-500 transition"
                         />

@@ -115,7 +115,6 @@ export default function ReportPage() {
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
       <Navbar />
-      <Toaster position="top-center" />
 
       <main className="flex-grow container mx-auto px-4 py-12 max-w-3xl">
         <div className="mb-6">

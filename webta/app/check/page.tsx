@@ -157,7 +157,7 @@ export default function CheckCertificatePage() {
             </div>
             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                 <h3 className="font-bold text-gray-900 mb-2">2. Validasi Blockchain</h3>
-                <p className="text-sm text-gray-500">Sistem akan mencari data di jaringan Ethereum Localhost secara real-time.</p>
+                <p className="text-sm text-gray-500">Sistem akan mencari data di jaringan Ethereum Sepolia Testnet secara real-time.</p>
             </div>
             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                 <h3 className="font-bold text-gray-900 mb-2">3. Lihat Riwayat</h3>

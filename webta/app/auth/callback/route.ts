@@ -5,10 +5,10 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  
+
   if (code) {
     const cookieStore = await cookies();
-    
+
     // Membuat klien Supabase khusus untuk Server (Route Handler)
     // yang bisa membaca/menulis cookie secara otomatis
     const supabase = createServerClient(
@@ -32,10 +32,10 @@ export async function GET(request: Request) {
         },
       }
     );
-    
+
     // Tukar kode auth dengan session
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    
+
     if (!error) {
       // Login sukses -> arahkan ke landing page
       return NextResponse.redirect(`${origin}/`);

@@ -116,7 +116,6 @@ export default function ManageNewsPage() {
     return (
         <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
             <Navbar />
-            <Toaster position="top-center" />
 
             <main className="max-w-4xl mx-auto px-4 py-10">
 

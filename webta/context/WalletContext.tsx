@@ -11,12 +11,8 @@ declare global {
   }
 }
 
-// --- CONFIG ADMIN ---
-const ADMIN_WALLETS = [
-  "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",  // Akun Hardhat
-  "0x59f778dF00c354742fAc5992737218C5A023b69b",  // Wallet Asli 1 (dipake akun breeder)
-  "0x281cfC570B52e4099946cfb731300745A3842892", // Wallet Asli 2 Bikinan (dipake akun koichain)
-].map(addr => addr.toLowerCase());
+// Konfigurasi Admin sekarang diverifikasi langsung dari Supabase Role (Web2)
+// Tidak ada lagi hardcode wallet address.
 
 interface WalletConflictInfo {
   address: string;
@@ -39,13 +35,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [walletConflict, setWalletConflict] = useState<WalletConflictInfo | null>(null);
 
-  // Helper untuk set akun dan cek admin
-  const handleSetAccount = (address: string) => {
-    const lowerAddr = address.toLowerCase();
-    setAccount(lowerAddr);
-    setIsAdmin(ADMIN_WALLETS.includes(lowerAddr));
-  };
-
   /**
    * Validasi wallet ke database.
    * Jika wallet sudah dipakai akun LAIN, set walletConflict (tampilkan modal)
@@ -59,12 +48,15 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
     // Tentukan userId: pakai parameter jika ada, kalau tidak baru ambil dari session
     let currentUserId = userId;
+    let isUserAdmin = false;
+
     if (!currentUserId) {
       const { data: { session } } = await supabase.auth.getSession();
       currentUserId = session?.user?.id;
     }
 
     if (currentUserId) {
+      // 1. Cek apakah wallet dipakai orang lain
       const { data: owner } = await supabase
         .from('user_wallets')
         .select('user_id')
@@ -78,9 +70,21 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         setIsAdmin(false);
         return false;
       }
+
+      // 2. Cek apakah user ini adalah admin dari Supabase profiles
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', currentUserId)
+        .single();
+      
+      if (profile && profile.role === 'admin') {
+        isUserAdmin = true;
+      }
     }
 
-    handleSetAccount(lowerAddr);
+    setAccount(lowerAddr);
+    setIsAdmin(isUserAdmin);
     return true;
   };
 
