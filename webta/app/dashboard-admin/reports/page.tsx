@@ -28,6 +28,7 @@ export default function AdminReportsPage() {
       toast.error("Gagal mengambil data laporan.");
     } else {
       setReports(data || []);
+    }
     setLoading(false);
   };
 
