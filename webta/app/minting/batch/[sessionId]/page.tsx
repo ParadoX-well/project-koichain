@@ -83,14 +83,14 @@ export default function BatchMintPage() {
         .select('*')
         .eq('spawning_session_id', sessionId)
         .order('created_at', { ascending: false });
-      
+
       if (minted) setMintedKois(minted);
 
       setSession(s);
       // Ambil nama breeder dari profiles untuk default breederName
       const { data: prof } = await supabase.from('profiles').select('full_name').eq('id', authUser.id).single();
       const defaultBreeder = prof?.full_name || '';
-      
+
       // Hitung start index dari jumlah anakan sebelumnya
       const initIdx = (s.offspring_count || 0) + 1;
       setRows([emptyRow(s.session_code, initIdx, defaultBreeder)]);
@@ -102,8 +102,8 @@ export default function BatchMintPage() {
   const addRow = () => {
     if (!session) return;
     setRows(prev => {
-      const maxInRows = prev.length > 0 
-        ? Math.max(...prev.map(r => parseInt(r.id.split('-').pop() || '0'))) 
+      const maxInRows = prev.length > 0
+        ? Math.max(...prev.map(r => parseInt(r.id.split('-').pop() || '0')))
         : (session.offspring_count || 0);
       return [...prev, emptyRow(session.session_code, maxInRows + 1, prev[0]?.breederName || '')];
     });
@@ -115,7 +115,7 @@ export default function BatchMintPage() {
     setRows(prev => prev.map((r, idx) => idx === i ? { ...r, [field]: value } : r));
   };
 
-  const uploadPhoto = async (file: File): Promise<{publicUrl: string, fileName: string}> => {
+  const uploadPhoto = async (file: File): Promise<{ publicUrl: string, fileName: string }> => {
     const ext = file.name.split('.').pop();
     const fileName = `photos/${Date.now()}-${Math.random()}.${ext}`;
     const formData = new FormData();
@@ -241,7 +241,10 @@ export default function BatchMintPage() {
     });
 
     setMinting(false);
-    if (successCount > 0) toast.success(`${successCount} anakan berhasil di-mint! 🎉`);
+    if (successCount > 0) {
+      toast.success(`${successCount} anakan berhasil di-mint! 🎉`);
+      setTimeout(() => window.location.reload(), 1500);
+    }
   };
 
   const statusBadge = (status: string) => {
@@ -462,7 +465,7 @@ export default function BatchMintPage() {
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">{koi.variety}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{koi.size} cm</td>
-                      <td className="px-6 py-4 text-sm text-gray-500">{new Date(koi.created_at).toLocaleString('id-ID', {day: 'numeric', month:'short', hour:'2-digit', minute:'2-digit'})}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">{new Date(koi.created_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td>
                       <td className="px-6 py-4 text-center">
                         {koi.photo_url ? (
                           <a href={koi.photo_url} target="_blank" rel="noreferrer" className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline bg-blue-50 px-3 py-1.5 rounded-lg">Lihat</a>
