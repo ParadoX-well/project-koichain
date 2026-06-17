@@ -78,11 +78,13 @@ export default function BatchMintPage() {
       }
 
       // Fetch history ikan yang sudah di-minting untuk sesi ini
+      // Gunakan OR agar ikan lama (sebelum ada kolom spawning_session_id) tetap terdeteksi dari pola ID-nya
+      const prefix = s.session_code.split('-').length >= 3 ? `KOI-${s.session_code.split('-')[1]}-${s.session_code.split('-')[2]}-%` : 'none';
       const { data: minted } = await supabase
         .from('koi_certificates')
         .select('*')
-        .eq('spawning_session_id', sessionId)
-        .order('created_at', { ascending: false });
+        .or(`spawning_session_id.eq.${sessionId},koi_id.ilike.${prefix}`)
+        .order('minted_at', { ascending: false });
 
       if (minted) setMintedKois(minted);
 
@@ -465,7 +467,7 @@ export default function BatchMintPage() {
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">{koi.variety}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{koi.size} cm</td>
-                      <td className="px-6 py-4 text-sm text-gray-500">{new Date(koi.created_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">{new Date(koi.minted_at || koi.updated_at).toLocaleString('id-ID', {day: 'numeric', month:'short', hour:'2-digit', minute:'2-digit'})}</td>
                       <td className="px-6 py-4 text-center">
                         {koi.photo_url ? (
                           <a href={koi.photo_url} target="_blank" rel="noreferrer" className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline bg-blue-50 px-3 py-1.5 rounded-lg">Lihat</a>
