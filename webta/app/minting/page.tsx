@@ -62,7 +62,11 @@ export default function MintKoiPage() {
       const { data: profile } = await supabase.from('profiles').select('role, is_banned, full_name').eq('id', authUser.id).single();
 
       if (profile) {
-        setFormData(prev => ({ ...prev, breeder: profile.full_name || 'Anonymous' }));
+        setFormData(prev => ({ 
+          ...prev, 
+          breeder: profile.full_name || 'Anonymous',
+          id: prev.id || `KOI-${Math.floor(100000 + Math.random() * 900000)}` // Auto generate ID
+        }));
         if (profile.is_banned) {
           setIsBanned(true);
           setLoading(false);
@@ -163,6 +167,26 @@ export default function MintKoiPage() {
         toast.error("Varietas Wajib Diisi!", { id: toastId });
         setProcessLoading(false);
         return;
+      }
+
+      // Validasi Lineage (Father & Mother)
+      if (formData.fatherId) {
+          toast.loading("Memvalidasi ID Bapak...", { id: toastId });
+          const { data: fatherInfo } = await supabase.from('koi_certificates').select('koi_id').eq('koi_id', formData.fatherId).maybeSingle();
+          if (!fatherInfo) {
+              toast.error("GAGAL: ID Indukan Jantan (Bapak) tidak ditemukan di sistem!", { id: toastId });
+              setProcessLoading(false);
+              return;
+          }
+      }
+      if (formData.motherId) {
+          toast.loading("Memvalidasi ID Ibu...", { id: toastId });
+          const { data: motherInfo } = await supabase.from('koi_certificates').select('koi_id').eq('koi_id', formData.motherId).maybeSingle();
+          if (!motherInfo) {
+              toast.error("GAGAL: ID Indukan Betina (Ibu) tidak ditemukan di sistem!", { id: toastId });
+              setProcessLoading(false);
+              return;
+          }
       }
 
       // PRE-CHECK DUPLICATE ID (Validasi Database sebelum upload & bayar gas)
