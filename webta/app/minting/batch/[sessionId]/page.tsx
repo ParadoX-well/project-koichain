@@ -55,6 +55,7 @@ export default function BatchMintPage() {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<OffspringRow[]>([]);
+  const [mintedKois, setMintedKois] = useState<any[]>([]);
   const [minting, setMinting] = useState(false);
   const [doneCount, setDoneCount] = useState(0);
 
@@ -76,11 +77,23 @@ export default function BatchMintPage() {
         return;
       }
 
+      // Fetch history ikan yang sudah di-minting untuk sesi ini
+      const { data: minted } = await supabase
+        .from('koi_certificates')
+        .select('*')
+        .eq('spawning_session_id', sessionId)
+        .order('created_at', { ascending: false });
+      
+      if (minted) setMintedKois(minted);
+
       setSession(s);
       // Ambil nama breeder dari profiles untuk default breederName
       const { data: prof } = await supabase.from('profiles').select('full_name').eq('id', authUser.id).single();
       const defaultBreeder = prof?.full_name || '';
-      setRows([emptyRow(s.session_code, 1, defaultBreeder)]);
+      
+      // Hitung start index dari jumlah anakan sebelumnya
+      const initIdx = (s.offspring_count || 0) + 1;
+      setRows([emptyRow(s.session_code, initIdx, defaultBreeder)]);
       setLoading(false);
     };
     init();
@@ -88,7 +101,12 @@ export default function BatchMintPage() {
 
   const addRow = () => {
     if (!session) return;
-    setRows(prev => [...prev, emptyRow(session.session_code, prev.length + 1, prev[0]?.breederName || '')]);
+    setRows(prev => {
+      const maxInRows = prev.length > 0 
+        ? Math.max(...prev.map(r => parseInt(r.id.split('-').pop() || '0'))) 
+        : (session.offspring_count || 0);
+      return [...prev, emptyRow(session.session_code, maxInRows + 1, prev[0]?.breederName || '')];
+    });
   };
 
   const removeRow = (i: number) => setRows(prev => prev.filter((_, idx) => idx !== i));
@@ -416,6 +434,48 @@ export default function BatchMintPage() {
             </button>
           )}
         </div>
+
+        {/* RIWAYAT ANAKAN (YANG SUDAH DI-MINT) */}
+        {mintedKois.length > 0 && (
+          <div className="mt-10 bg-white rounded-2xl border border-green-200 shadow-sm overflow-hidden mb-6">
+            <div className="flex items-center px-6 py-4 border-b border-green-100 bg-green-50">
+              <h2 className="font-bold text-green-900 flex items-center gap-2">
+                <CheckCircle size={18} className="text-green-600" /> Riwayat Anakan di Sesi Ini ({mintedKois.length})
+              </h2>
+            </div>
+            <div className="overflow-x-auto max-h-96">
+              <table className="w-full text-left whitespace-nowrap relative">
+                <thead className="bg-white sticky top-0 z-10 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  <tr>
+                    <th className="px-6 py-4 border-b border-gray-100">ID Koi</th>
+                    <th className="px-6 py-4 border-b border-gray-100">Varietas</th>
+                    <th className="px-6 py-4 border-b border-gray-100">Ukuran</th>
+                    <th className="px-6 py-4 border-b border-gray-100">Waktu Minting</th>
+                    <th className="px-6 py-4 border-b border-gray-100 text-center">Foto</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {mintedKois.map((koi, i) => (
+                    <tr key={i} className="hover:bg-green-50/50 transition">
+                      <td className="px-6 py-4 text-sm font-bold font-mono text-gray-900">
+                        <Link href={`/koi/${koi.koi_id}`} className="hover:text-green-600 hover:underline">{koi.koi_id}</Link>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{koi.variety}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{koi.size} cm</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">{new Date(koi.created_at).toLocaleString('id-ID', {day: 'numeric', month:'short', hour:'2-digit', minute:'2-digit'})}</td>
+                      <td className="px-6 py-4 text-center">
+                        {koi.photo_url ? (
+                          <a href={koi.photo_url} target="_blank" rel="noreferrer" className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline bg-blue-50 px-3 py-1.5 rounded-lg">Lihat</a>
+                        ) : <span className="text-gray-300">-</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
       </main>
     </div>
   );
