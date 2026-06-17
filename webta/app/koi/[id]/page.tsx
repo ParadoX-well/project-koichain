@@ -482,7 +482,7 @@ export default function KoiDetailPage({ params }: { params: Promise<{ id: string
                             )}
                         </div>
                         <div className="absolute bottom-6 left-6 bg-white p-3 rounded-2xl shadow-xl border border-gray-100 group/qr">
-                            <QRCode id="QRCode" value={`${process.env.NEXT_PUBLIC_BASE_URL || 'https://koichain.id'}/koi/${koiId}`} size={160} />
+                            <QRCode id="QRCode" value={`${process.env.NEXT_PUBLIC_BASE_URL || 'https://koichainid.web.id'}/koi/${koiId}`} size={160} />
                             
                             {/* Tombol Download QR (HANYA OWNER) */}
                             {isOwner && (
