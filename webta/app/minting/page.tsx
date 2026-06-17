@@ -403,10 +403,10 @@ export default function MintKoiPage() {
 
         <form onSubmit={handleMint} className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 space-y-6">
           <div className="grid md:grid-cols-2 gap-6">
-            <div><label className="font-bold text-sm block mb-2">ID Koi (Unik)</label><input required name="id" onChange={handleInputChange} type="text" placeholder="Contoh: KOI-2025-001" className="w-full p-3 border rounded-xl" /></div>
+            <div><label className="font-bold text-sm block mb-2">ID Koi (Unik)</label><input required name="id" value={formData.id} onChange={handleInputChange} type="text" placeholder="Contoh: KOI-2025-001" className="w-full p-3 border rounded-xl" /></div>
             <div>
               <label className="font-bold text-sm block mb-2">Varietas</label>
-              <select required name="variety" onChange={handleInputChange} className="w-full p-3 border rounded-xl bg-white focus:ring-2 focus:ring-orange-500 outline-none">
+              <select required name="variety" value={formData.variety} onChange={handleInputChange} className="w-full p-3 border rounded-xl bg-white focus:ring-2 focus:ring-orange-500 outline-none">
                 <option value="">Pilih Varietas...</option>
                 <option value="Kohaku">Kohaku</option>
                 <option value="Taisho Sanke">Taisho Sanke</option>
@@ -434,15 +434,15 @@ export default function MintKoiPage() {
 
             <div>
               <label className="font-bold text-sm block mb-2">Gender</label>
-              <select name="gender" onChange={handleInputChange} className="w-full p-3 border rounded-xl bg-white">
+              <select name="gender" value={formData.gender} onChange={handleInputChange} className="w-full p-3 border rounded-xl bg-white">
                 <option value="Tidak Diketahui">Tidak Diketahui</option>
                 <option value="Jantan">Jantan</option>
                 <option value="Betina">Betina</option>
               </select>
             </div>
-            <div><label className="font-bold text-sm block mb-2">Umur</label><input name="age" onChange={handleInputChange} type="text" placeholder="Contoh: Sansai (3 Tahun)" className="w-full p-3 border rounded-xl" /></div>
-            <div><label className="font-bold text-sm block mb-2">Ukuran (cm)</label><input required name="size" onChange={handleInputChange} type="number" placeholder="55" className="w-full p-3 border rounded-xl" /></div>
-            <div className="md:col-span-2"><label className="font-bold text-sm block mb-2">Kondisi</label><input required name="condition" onChange={handleInputChange} type="text" placeholder="Sehat, Body Bulky..." className="w-full p-3 border rounded-xl" /></div>
+            <div><label className="font-bold text-sm block mb-2">Umur</label><input name="age" value={formData.age} onChange={handleInputChange} type="text" placeholder="Contoh: Sansai (3 Tahun)" className="w-full p-3 border rounded-xl" /></div>
+            <div><label className="font-bold text-sm block mb-2">Ukuran (cm)</label><input required name="size" value={formData.size} onChange={handleInputChange} type="number" placeholder="55" className="w-full p-3 border rounded-xl" /></div>
+            <div className="md:col-span-2"><label className="font-bold text-sm block mb-2">Kondisi</label><input required name="condition" value={formData.condition} onChange={handleInputChange} type="text" placeholder="Sehat, Body Bulky..." className="w-full p-3 border rounded-xl" /></div>
             <div className="md:col-span-2"><label className="font-bold text-sm block mb-2">Catatan Awal (Traceability)</label><input required name="note" value={formData.note} onChange={handleInputChange} type="text" placeholder="Catatan awal ikan ini..." className="w-full p-3 border rounded-xl" /></div>
           </div>
 
@@ -452,11 +452,11 @@ export default function MintKoiPage() {
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <label className="font-bold text-sm block mb-2 text-orange-800">ID Indukan Jantan (Bapak)</label>
-                <input name="fatherId" onChange={handleInputChange} type="text" placeholder="ID Koi Bapak (Opsional)" className="w-full p-3 border border-orange-200 rounded-xl" />
+                <input name="fatherId" value={formData.fatherId} onChange={handleInputChange} type="text" placeholder="ID Koi Bapak (Opsional)" className="w-full p-3 border border-orange-200 rounded-xl" />
               </div>
               <div>
                 <label className="font-bold text-sm block mb-2 text-orange-800">ID Indukan Betina (Ibu)</label>
-                <input name="motherId" onChange={handleInputChange} type="text" placeholder="ID Koi Ibu (Opsional)" className="w-full p-3 border border-orange-200 rounded-xl" />
+                <input name="motherId" value={formData.motherId} onChange={handleInputChange} type="text" placeholder="ID Koi Ibu (Opsional)" className="w-full p-3 border border-orange-200 rounded-xl" />
               </div>
             </div>
           </div>

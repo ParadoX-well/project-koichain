@@ -18,6 +18,10 @@ export default function Navbar() {
     const [isNotifOpen, setIsNotifOpen] = useState(false);
     const [notifications, setNotifications] = useState<any[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
+    
+    // Admin Notifications
+    const [adminNotifs, setAdminNotifs] = useState<{id: string, type: string, message: string, link: string}[]>([]);
+    const [adminUnreadCount, setAdminUnreadCount] = useState(0);
 
     const { account, connectWallet, disconnectWallet } = useWallet();
     const router = useRouter();
@@ -41,6 +45,45 @@ export default function Navbar() {
                 }
                 // Gunakan foto dari profiles, fallback ke foto google jika ada
                 setAvatarUrl(data.avatar_url || googlePhoto);
+
+                // Jika ADMIN, fetch admin notifications (Role Requests & Reports)
+                if (data.role === 'admin') {
+                    let tempAdminNotifs = [];
+                    // 1. Fetch Role Requests
+                    const { data: roleReqs } = await supabase
+                        .from('profiles')
+                        .select('id, full_name, role_request')
+                        .not('role_request', 'is', null)
+                        .eq('role', 'user');
+                    
+                    if (roleReqs && roleReqs.length > 0) {
+                        tempAdminNotifs.push({
+                            id: 'role-req',
+                            type: 'pengajuan',
+                            message: `${roleReqs.length} Pengajuan Mitra Baru`,
+                            link: '/dashboard-admin/users'
+                        });
+                    }
+
+                    // 2. Fetch Pending Reports
+                    const { data: pendingReports } = await supabase
+                        .from('reports')
+                        .select('id')
+                        .eq('status', 'pending');
+                    
+                    if (pendingReports && pendingReports.length > 0) {
+                        tempAdminNotifs.push({
+                            id: 'report-req',
+                            type: 'laporan',
+                            message: `${pendingReports.length} Laporan Menunggu Tindakan`,
+                            link: '/dashboard-admin/reports'
+                        });
+                    }
+
+                    setAdminNotifs(tempAdminNotifs);
+                    setAdminUnreadCount(tempAdminNotifs.length);
+                }
+
             } else {
                 setAvatarUrl(metadata?.avatar_url || metadata?.picture || '');
             }
@@ -187,8 +230,8 @@ export default function Navbar() {
                             className="p-2 relative text-gray-500 hover:text-orange-600 transition hover:bg-orange-50 rounded-full"
                         >
                             <Bell size={20} />
-                            {unreadCount > 0 && (
-                                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                            {(unreadCount > 0 || adminUnreadCount > 0) && (
+                                <span className={`absolute top-1 right-1 w-2.5 h-2.5 rounded-full border-2 border-white ${adminUnreadCount > 0 ? 'bg-red-500 animate-pulse' : 'bg-orange-500'}`}></span>
                             )}
                         </button>
 
@@ -203,13 +246,30 @@ export default function Navbar() {
                                     )}
                                 </div>
                                 <div className="overflow-y-auto flex-1">
-                                    {notifications.length === 0 ? (
+                                    {(notifications.length === 0 && adminNotifs.length === 0) ? (
                                         <div className="p-6 text-center text-gray-400 text-sm flex flex-col items-center gap-2">
                                             <Bell size={24} className="text-gray-200" />
                                             Belum ada notifikasi
                                         </div>
                                     ) : (
                                         <div className="divide-y divide-gray-50">
+                                            {/* ADMIN NOTIFICATIONS (PINNED AT TOP) */}
+                                            {adminNotifs.map(an => (
+                                                <div key={an.id} className="p-4 text-sm bg-red-50/50 hover:bg-red-50 transition relative group border-l-4 border-red-500">
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="mt-0.5 w-2 h-2 rounded-full shrink-0 bg-red-500 animate-pulse"></div>
+                                                        <div className="flex-1 pr-2">
+                                                            <p className="text-red-800 font-bold leading-snug">Perhatian Admin</p>
+                                                            <p className="text-red-600 text-xs mt-1 leading-snug font-medium">{an.message}</p>
+                                                            <Link href={an.link} onClick={() => setIsNotifOpen(false)} className="text-[11px] text-red-500 hover:text-red-700 underline font-bold mt-2 inline-block">
+                                                                Tinjau Sekarang
+                                                            </Link>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            
+                                            {/* REGULAR NOTIFICATIONS */}
                                             {notifications.map(n => (
                                                 <div key={n.id} className={`p-4 text-sm hover:bg-gray-50 transition relative group ${!n.is_read ? 'bg-orange-50/30' : ''}`}>
                                                     <div className="flex items-start gap-3">

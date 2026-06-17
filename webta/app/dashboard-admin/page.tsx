@@ -1,12 +1,35 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useWallet } from '@/context/WalletContext';
-import { Wallet, Users, Send, Database, ArrowRight, ShieldAlert, Activity, Search, MessageSquareWarning, PenLine, BookOpen, Eye, Baby, Compass, Store, Newspaper } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { Wallet, Users, Send, Database, ArrowRight, ShieldAlert, Activity, Search, MessageSquareWarning, PenLine, BookOpen, Eye, Baby, Compass, Store, Newspaper, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import Navbar from "@/components/Navbar";
 
 export default function AdminDashboard() {
     const { account, connectWallet, isAdmin } = useWallet();
+    const [pendingUsers, setPendingUsers] = useState(0);
+    const [pendingReports, setPendingReports] = useState(0);
+
+    useEffect(() => {
+        if (!isAdmin) return;
+        const fetchData = async () => {
+            const { data: roleReqs } = await supabase
+                .from('profiles')
+                .select('id')
+                .not('role_request', 'is', null)
+                .eq('role', 'user');
+            if (roleReqs) setPendingUsers(roleReqs.length);
+
+            const { data: repReqs } = await supabase
+                .from('reports')
+                .select('id')
+                .eq('status', 'pending');
+            if (repReqs) setPendingReports(repReqs.length);
+        };
+        fetchData();
+    }, [isAdmin]);
 
     // Proteksi: Tampilan jika User BUKAN Admin (atau belum connect)
     if (!account || !isAdmin) {
@@ -48,6 +71,38 @@ export default function AdminDashboard() {
                     <p className="text-gray-500 mt-1">Kelola seluruh sistem dan operasional KoiChain dari sini.</p>
                     <p className="text-sm text-gray-400 mt-1">Wallet terhubung: <span className="font-mono bg-gray-200 px-2 py-0.5 rounded text-gray-600">{account}</span></p>
                 </div>
+
+                {/* BANNER NOTIFIKASI ADMIN */}
+                {(pendingUsers > 0 || pendingReports > 0) && (
+                    <div className="mb-10 bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 animate-fade-in-up">
+                        <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center shrink-0">
+                                <AlertTriangle className="text-red-600 w-6 h-6 animate-pulse" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-red-800">Menunggu Tindakan Anda</h3>
+                                <p className="text-red-600 text-sm mt-1 font-medium">
+                                    Terdapat {pendingUsers > 0 ? `${pendingUsers} Pengajuan Mitra Baru ` : ''} 
+                                    {pendingUsers > 0 && pendingReports > 0 ? 'dan ' : ''} 
+                                    {pendingReports > 0 ? `${pendingReports} Laporan User ` : ''}
+                                    yang perlu segera ditinjau.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex gap-3 w-full md:w-auto shrink-0">
+                            {pendingUsers > 0 && (
+                                <Link href="/dashboard-admin/users" className="flex-1 md:flex-none text-center bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-md transition">
+                                    Cek Pengajuan
+                                </Link>
+                            )}
+                            {pendingReports > 0 && (
+                                <Link href="/dashboard-admin/reports" className="flex-1 md:flex-none text-center bg-white border border-red-200 hover:bg-red-50 text-red-700 px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm transition">
+                                    Cek Laporan
+                                </Link>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* --- SEKSI 1: OPERASIONAL BLOCKCHAIN --- */}
                 <div className="mb-10">
