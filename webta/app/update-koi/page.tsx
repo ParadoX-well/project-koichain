@@ -149,7 +149,7 @@ export default function UpdateKoiPage() {
     }
   };
 
-  const uploadToStorage = async (file: File) => {
+  const uploadToStorage = async (file: File): Promise<{publicUrl: string, fileName: string}> => {
     const fileName = `updates/${Date.now()}-${file.name}`;
     const formData = new FormData();
     formData.append('file', file);
@@ -158,7 +158,7 @@ export default function UpdateKoiPage() {
     const res = await fetch('/api/upload', { method: 'POST', body: formData });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Gagal upload foto ikan');
-    return data.publicUrl;
+    return { publicUrl: data.publicUrl, fileName };
   };
 
   const { isLinked, recheckLink } = useWalletLinkCheck(authUser?.id || '', account);
@@ -177,6 +177,8 @@ export default function UpdateKoiPage() {
     setLoading(true);
     const toastId = toast.loading("Memproses update...");
 
+    let uploadedFiles: string[] = [];
+
     try {
         let newPhotoUrl = "";
         let newCertUrl = "";
@@ -184,15 +186,21 @@ export default function UpdateKoiPage() {
 
         if (files.photo) {
             toast.loading("Mengupload foto...", { id: toastId });
-            newPhotoUrl = await uploadToStorage(files.photo);
+            const up = await uploadToStorage(files.photo);
+            newPhotoUrl = up.publicUrl;
+            uploadedFiles.push(up.fileName);
         }
         if (files.cert) {
             toast.loading("Mengupload sertifikat asli...", { id: toastId });
-            newCertUrl = await uploadToStorage(files.cert);
+            const up = await uploadToStorage(files.cert);
+            newCertUrl = up.publicUrl;
+            uploadedFiles.push(up.fileName);
         }
         if (files.contest) {
             toast.loading("Mengupload sertifikat kontes...", { id: toastId });
-            newContestUrl = await uploadToStorage(files.contest);
+            const up = await uploadToStorage(files.contest);
+            newContestUrl = up.publicUrl;
+            uploadedFiles.push(up.fileName);
         }
 
         const provider = new ethers.BrowserProvider(window.ethereum);
@@ -238,6 +246,13 @@ export default function UpdateKoiPage() {
 
     } catch (err: any) {
         console.error(err);
+        if (uploadedFiles.length > 0) {
+            await fetch('/api/upload', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bucket: 'koi-assets', fileNames: uploadedFiles })
+            });
+        }
         toast.error("Gagal: " + (err.reason || err.message), { id: toastId });
     } finally {
         setLoading(false);

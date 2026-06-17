@@ -213,20 +213,27 @@ export default function EditNewsPage() {
             }
 
             // Update data di tabel news
-            const { error: updateError } = await supabase
-                .from('news')
-                .update({
-                    title: title.trim(),
-                    slug: slug.trim(),
-                    category: category || null,
-                    content: content.trim(),
-                    image_url: imageUrl,
-                    is_main: isMain,
+            const syncRes = await fetch('/api/sync-news', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'update',
+                    payload: {
+                        id: newsId,
+                        title: title.trim(),
+                        slug: slug.trim(),
+                        category: category || null,
+                        content: content.trim(),
+                        image_url: imageUrl,
+                        is_main: isMain,
+                    }
                 })
-                .eq('id', newsId);
+            });
+            const syncData = await syncRes.json();
+            const updateError = !syncRes.ok ? new Error(syncData.error) : null;
 
             if (updateError) {
-                if (updateError.code === '23505') {
+                if (updateError.message.includes('23505')) {
                     toast.error('Slug sudah digunakan oleh berita lain!');
                 } else {
                     toast.error(`Gagal menyimpan: ${updateError.message}`);

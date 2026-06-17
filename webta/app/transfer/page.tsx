@@ -157,7 +157,7 @@ export default function TransferKoiPage() {
   };
 
   const uploadPhoto = async () => {
-      if (!photoFile) return "";
+      if (!photoFile) return { publicUrl: "", fileName: "" };
       const fileName = `transfer/${Date.now()}-${photoFile.name}`;
       const formData = new FormData();
       formData.append('file', photoFile);
@@ -166,7 +166,7 @@ export default function TransferKoiPage() {
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
       const upData = await res.json();
       if (!res.ok) throw new Error(upData.error || 'Gagal upload foto ikan');
-      return upData.publicUrl;
+      return { publicUrl: upData.publicUrl, fileName };
   };
 
     const handleResolveOwner = async () => {
@@ -274,11 +274,15 @@ export default function TransferKoiPage() {
     setLoading(true);
     const toastId = toast.loading("Memproses transfer...");
 
+    let uploadedFileName = "";
+
     try {
         let newPhotoUrl = "";
         if (photoFile) {
             toast.loading("Mengupload foto...", { id: toastId });
-            newPhotoUrl = await uploadPhoto();
+            const uploadRes = await uploadPhoto();
+            newPhotoUrl = uploadRes.publicUrl;
+            uploadedFileName = uploadRes.fileName;
         }
 
         const provider = new ethers.BrowserProvider(window.ethereum);
@@ -340,6 +344,14 @@ export default function TransferKoiPage() {
 
     } catch (err: any) {
         console.error(err);
+        if (uploadedFileName) {
+            toast.loading("Transaksi Gagal. Membersihkan file...", { id: toastId });
+            await fetch('/api/upload', {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ bucket: 'koi-assets', fileNames: [uploadedFileName] })
+            });
+        }
         toast.error("Gagal: " + (err.reason || err.message), { id: toastId });
     } finally {
         setLoading(false);

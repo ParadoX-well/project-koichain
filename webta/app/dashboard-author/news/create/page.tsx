@@ -152,19 +152,27 @@ export default function CreateNewsPage() {
                 imageUrl = data.publicUrl;
             }
 
-            // Insert ke tabel news
-            const { error: insertError } = await supabase.from('news').insert({
-                title: title.trim(),
-                slug: slug.trim(),
-                category: category || null,
-                content: content.trim(),
-                image_url: imageUrl,
-                is_main: isMain,
-                author_id: authorId,
+            const syncRes = await fetch('/api/sync-news', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'create',
+                    payload: {
+                        title: title.trim(),
+                        slug: slug.trim(),
+                        category: category || null,
+                        content: content.trim(),
+                        image_url: imageUrl,
+                        is_main: isMain,
+                        author_id: authorId,
+                    }
+                })
             });
+            const syncData = await syncRes.json();
+            const insertError = !syncRes.ok ? new Error(syncData.error) : null;
 
             if (insertError) {
-                if (insertError.code === '23505') {
+                if (insertError.message.includes('23505')) {
                     toast.error('Slug sudah digunakan! Ubah slug menjadi unik.');
                 } else {
                     toast.error(`Gagal menyimpan: ${insertError.message}`);

@@ -105,7 +105,13 @@ export default function ManageNewsPage() {
             }
         }
 
-        const { error } = await supabase.from('news').delete().eq('id', item.id);
+        const syncRes = await fetch('/api/sync-news', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'delete', payload: { id: item.id } })
+        });
+        const syncData = await syncRes.json();
+        const error = !syncRes.ok ? new Error(syncData.error) : null;
 
         if (error) {
             toast.error('Gagal menghapus berita.');

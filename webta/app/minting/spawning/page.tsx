@@ -127,25 +127,28 @@ export default function SpawningPage() {
 
     const code = generateCode();
 
-    const { data: session, error } = await supabase
-      .from('spawning_sessions')
-      .insert({
-        breeder_id: userId,
-        session_code: code,
-        mother_koi_id: form.motherId.trim(),
-        spawn_date: form.spawnDate,
-        location: form.location,
-        notes: form.notes,
+    const syncRes = await fetch('/api/sync-spawning', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'create',
+        payload: {
+          breeder_id: userId,
+          session_code: code,
+          mother_koi_id: form.motherId.trim(),
+          spawn_date: form.spawnDate,
+          location: form.location,
+          notes: form.notes,
+          fathers: validFathers
+        }
       })
-      .select()
-      .single();
+    });
 
-    if (error) { toast.error(error.message); setSaving(false); return; }
-
-    if (validFathers.length > 0) {
-      await supabase.from('spawning_fathers').insert(
-        validFathers.map(f => ({ session_id: session.id, father_koi_id: f.trim() }))
-      );
+    const syncData = await syncRes.json();
+    if (!syncRes.ok) {
+      toast.error(syncData.error || "Gagal menyimpan sesi ke database");
+      setSaving(false);
+      return;
     }
 
     toast.success(`Sesi ${code} berhasil dibuat!`);
@@ -158,7 +161,11 @@ export default function SpawningPage() {
 
   const handleDelete = async (id: string, code: string) => {
     if (!confirm(`Hapus sesi ${code}? Semua data ayah pada sesi ini akan ikut terhapus.`)) return;
-    await supabase.from('spawning_sessions').delete().eq('id', id);
+    await fetch('/api/sync-spawning', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
     toast.success('Sesi dihapus.');
     fetchSessions(userId);
   };

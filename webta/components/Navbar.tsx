@@ -16,7 +16,6 @@ export default function Navbar() {
     const [avatarUrl, setAvatarUrl] = useState<string>('');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isNotifOpen, setIsNotifOpen] = useState(false);
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [notifications, setNotifications] = useState<any[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
 
@@ -164,7 +163,7 @@ export default function Navbar() {
                     />
                 </div>
                 {/* TEKS MODERN & GRADIENT HOVER */}
-                <span className="text-2xl font-black tracking-tighter text-gray-900 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-orange-600 group-hover:to-pink-600 transition-all duration-300">
+                <span className="hidden sm:block text-2xl font-black tracking-tighter text-gray-900 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-orange-600 group-hover:to-pink-600 transition-all duration-300">
                     KoiChain ID
                 </span>
             </Link>
@@ -342,21 +341,7 @@ export default function Navbar() {
                         <span className="hidden sm:inline">Login</span>
                     </Link>
                 )}
-                {/* --- HAMBURGER MENU TOGGLE --- */}
-                <button
-                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    className="md:hidden p-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition"
-                >
-                    {isMobileMenuOpen ? <X size={24} /> : <div className="space-y-1.5"><div className="w-5 h-0.5 bg-current"></div><div className="w-5 h-0.5 bg-current"></div><div className="w-5 h-0.5 bg-current"></div></div>}
-                </button>
             </div>
-
-            {/* MOBILE MENU DROPDOWN (DIHAPUS AGAR MINIMALIS) */}
-            {isMobileMenuOpen && (
-                <div className="absolute top-full left-0 w-full bg-white border-b border-gray-200 shadow-xl md:hidden flex flex-col py-4 px-6 gap-4 z-40">
-                    <p className="text-gray-500 text-sm text-center italic">Menu navigasi berada di Dashboard masing-masing</p>
-                </div>
-            )}
         </nav>
     );
 }

@@ -238,17 +238,22 @@ export default function MintKoiPage() {
       toast.success("SERTIFIKAT BERHASIL DITERBITKAN!", { id: toastId });
       setUploadedPaths([]);
 
-      // Simpan ke koi_certificates (Supabase) untuk koleksi mitra
-      await supabase.from('koi_certificates').upsert({
-        koi_id: formData.id,
-        breeder_id: userId,
-        wallet_address: account,
-        variety: finalVariety,
-        size: parseInt(formData.size) || null,
-        photo_url: photoUrl,
-        spawning_session_id: null,
-        updated_at: new Date().toISOString(),
+      // Simpan ke koi_certificates (Supabase) via API untuk bypass RLS
+      const syncRes = await fetch('/api/sync-minting', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          koiId: formData.id,
+          walletAddress: account,
+          variety: finalVariety,
+          size: formData.size,
+          photoUrl: photoUrl,
+          spawningSessionId: null
+        })
       });
+      if (!syncRes.ok) {
+        console.error("Gagal sinkronisasi sertifikat ke database");
+      }
 
       setMintedData({
         ...formData,

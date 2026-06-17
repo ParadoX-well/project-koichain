@@ -97,7 +97,7 @@ export default function BatchMintPage() {
     setRows(prev => prev.map((r, idx) => idx === i ? { ...r, [field]: value } : r));
   };
 
-  const uploadPhoto = async (file: File): Promise<string> => {
+  const uploadPhoto = async (file: File): Promise<{publicUrl: string, fileName: string}> => {
     const ext = file.name.split('.').pop();
     const fileName = `photos/${Date.now()}-${Math.random()}.${ext}`;
     const formData = new FormData();
@@ -107,7 +107,7 @@ export default function BatchMintPage() {
     const res = await fetch('/api/upload', { method: 'POST', body: formData });
     const upData = await res.json();
     if (!res.ok) throw new Error(upData.error || 'Gagal upload file');
-    return upData.publicUrl;
+    return { publicUrl: upData.publicUrl, fileName };
   };
 
   const handleBatchMint = async () => {
@@ -154,9 +154,16 @@ export default function BatchMintPage() {
       if (row.status !== 'pending') continue;
 
       updateRow(i, 'status', 'minting');
+      let uploadedFileName = "";
       try {
         const finalVariety = row.variety === 'Lainnya' ? (row.customVariety || 'Lainnya') : row.variety;
-        const photoUrl = row.photo ? await uploadPhoto(row.photo) : '';
+        let photoUrl = "";
+        if (row.photo) {
+          const upRes = await uploadPhoto(row.photo);
+          photoUrl = upRes.publicUrl;
+          uploadedFileName = upRes.fileName;
+        }
+
         // Parameter order: id, variety, breeder, gender, age, size, condition, photo, cert, contest, fatherId, motherId, note
         const tx = await contract.mintCertificate(
           row.id,
@@ -176,28 +183,44 @@ export default function BatchMintPage() {
         await tx.wait();
         updateRow(i, 'status', 'done');
         updateRow(i, 'txHash', tx.hash);
-        // Simpan ke koi_certificates
-        await supabase.from('koi_certificates').upsert({
-          koi_id: row.id,
-          breeder_id: session.breeder_id,
-          wallet_address: account,
-          variety: finalVariety,
-          size: parseInt(row.size) || null,
-          photo_url: row.photo ? (await uploadPhoto(row.photo).catch(() => '')) : '',
-          spawning_session_id: session.id,
+        // Simpan ke koi_certificates via API (gunakan photoUrl yang sama)
+        await fetch('/api/sync-minting', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            koiId: row.id,
+            breederIdOverride: session.breeder_id,
+            walletAddress: account,
+            variety: finalVariety,
+            size: row.size,
+            photoUrl: photoUrl,
+            spawningSessionId: session.id
+          })
         });
         successCount++;
         setDoneCount(d => d + 1);
       } catch (err: any) {
+        if (uploadedFileName) {
+          await fetch('/api/upload', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bucket: 'koi-assets', fileNames: [uploadedFileName] })
+          });
+        }
         updateRow(i, 'status', 'error');
         toast.error(`Gagal mint ${row.id}: ${err.reason || err.message}`);
       }
     }
 
-    // Update offspring_count di sesi
-    await supabase.from('spawning_sessions')
-      .update({ offspring_count: (session.offspring_count || 0) + successCount })
-      .eq('id', session.id);
+    // Update offspring_count di sesi via API
+    await fetch('/api/sync-spawning', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'update_count',
+        payload: { session_id: session.id, successCount }
+      })
+    });
 
     setMinting(false);
     if (successCount > 0) toast.success(`${successCount} anakan berhasil di-mint! 🎉`);
