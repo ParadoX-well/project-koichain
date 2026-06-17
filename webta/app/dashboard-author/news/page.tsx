@@ -97,7 +97,11 @@ export default function ManageNewsPage() {
         if (item.image_url) {
             const fileName = item.image_url.split('/').pop();
             if (fileName) {
-                await supabase.storage.from('news_images').remove([fileName]);
+                await fetch('/api/upload', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bucket: 'news_images', fileNames: [fileName] })
+                });
             }
         }
 

@@ -1,5 +1,6 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import "@openzeppelin/hardhat-upgrades";
 import "hardhat-gas-reporter";
 import * as dotenv from "dotenv";
 
@@ -31,7 +32,8 @@ const config: HardhatUserConfig = {
     // Jaringan Lokal
     hardhat: {},
     localhost: {
-      url: "http://127.0.0.1:8545"
+      url: "http://127.0.0.1:8545",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
     // Jaringan Publik Sepolia
     sepolia: {

@@ -59,6 +59,21 @@ export default function AdminUsersPage() {
   
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const adminUpdateUser = async (targetUserId: string, updates: any) => {
+    try {
+      const res = await fetch('/api/admin/users/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetUserId, updates })
+      });
+      const data = await res.json();
+      if (!res.ok) return { error: { message: data.error || 'Terjadi kesalahan' } };
+      return { error: null };
+    } catch (err: any) {
+      return { error: { message: err.message } };
+    }
+  };
+
   const fetchData = async () => {
     setLoading(true);
 
@@ -80,7 +95,7 @@ export default function AdminUsersPage() {
     if (expired.length > 0) {
       console.log("Mencabut ban yang sudah kedaluwarsa...");
       for (const u of expired) {
-        await supabase.from('profiles').update({ is_banned: false, ban_until: null }).eq('id', u.id);
+        await adminUpdateUser(u.id, { is_banned: false, ban_until: null });
       }
       // Ambil data terbaru setelah auto-unban
       const freshRes = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
@@ -109,7 +124,7 @@ export default function AdminUsersPage() {
     if (currentRole === 'seller' && requestedRole === 'breeder') finalRole = 'seller,breeder';
     if (currentRole === 'breeder' && requestedRole === 'seller') finalRole = 'seller,breeder';
 
-    const { error } = await supabase.from('profiles').update({ role: finalRole, requested_role: null, verification_status: 'verified' }).eq('id', id);
+    const { error } = await adminUpdateUser(id, { role: finalRole, requested_role: null, verification_status: 'verified' });
     if (!error) {
       await supabase.from('notifications').insert({
         user_id: id,
@@ -125,7 +140,7 @@ export default function AdminUsersPage() {
 
   const handleReject = async (id: string) => {
     if (!confirm('Tolak pengajuan ini?')) return;
-    const { error } = await supabase.from('profiles').update({ requested_role: null, verification_status: 'rejected' }).eq('id', id);
+    const { error } = await adminUpdateUser(id, { requested_role: null, verification_status: 'rejected' });
     if (!error) {
       await supabase.from('notifications').insert({
         user_id: id,
@@ -144,7 +159,7 @@ export default function AdminUsersPage() {
 
   const executeDowngrade = async () => {
     if (!demoteTarget) return;
-    const { error } = await supabase.from('profiles').update({ role: 'user' }).eq('id', demoteTarget.id);
+    const { error } = await adminUpdateUser(demoteTarget.id, { role: 'user' });
     if (!error) {
       const msg = demoteReason.trim()
         ? `Mohon maaf, status mitra resmi Anda telah kami cabut. Alasan: ${demoteReason}`
@@ -167,7 +182,7 @@ export default function AdminUsersPage() {
 
   const handleRoleChange = async (id: string, newRole: string, name: string) => {
     if (!confirm(`Ubah role ${name} menjadi "${newRole}"?`)) return;
-    const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', id);
+    const { error } = await adminUpdateUser(id, { role: newRole });
     if (!error) { toast.success(`Role ${name} diubah ke ${newRole}.`); fetchData(); }
     else toast.error(error.message);
   };
@@ -175,7 +190,7 @@ export default function AdminUsersPage() {
   const handleBan = async () => {
     if (!banTarget) return;
     const ban_until = banDays === 0 ? null : new Date(Date.now() + banDays * 86400000).toISOString();
-    const { error } = await supabase.from('profiles').update({ is_banned: true, ban_until }).eq('id', banTarget.id);
+    const { error } = await adminUpdateUser(banTarget.id, { is_banned: true, ban_until });
     if (!error) {
       await supabase.from('notifications').insert({
         user_id: banTarget.id,
@@ -215,7 +230,7 @@ export default function AdminUsersPage() {
 
   const handleUnban = async (id: string, name: string) => {
     if (!confirm(`Unban ${name}?`)) return;
-    const { error } = await supabase.from('profiles').update({ is_banned: false, ban_until: null }).eq('id', id);
+    const { error } = await adminUpdateUser(id, { is_banned: false, ban_until: null });
     if (!error) {
       await supabase.from('notifications').insert({
         user_id: id,

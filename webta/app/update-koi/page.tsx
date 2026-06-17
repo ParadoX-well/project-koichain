@@ -151,9 +151,13 @@ export default function UpdateKoiPage() {
 
   const uploadToStorage = async (file: File) => {
     const fileName = `updates/${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from('koi-assets').upload(fileName, file);
-    if (error) throw error;
-    const { data } = supabase.storage.from('koi-assets').getPublicUrl(fileName);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('bucket', 'koi-assets');
+    formData.append('fileName', fileName);
+    const res = await fetch('/api/upload', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Gagal upload foto ikan');
     return data.publicUrl;
   };
 

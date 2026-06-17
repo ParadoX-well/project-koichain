@@ -100,9 +100,14 @@ export default function BatchMintPage() {
   const uploadPhoto = async (file: File): Promise<string> => {
     const ext = file.name.split('.').pop();
     const fileName = `photos/${Date.now()}-${Math.random()}.${ext}`;
-    const { error } = await supabase.storage.from('koi-assets').upload(fileName, file);
-    if (error) throw error;
-    return supabase.storage.from('koi-assets').getPublicUrl(fileName).data.publicUrl;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('bucket', 'koi-assets');
+    formData.append('fileName', fileName);
+    const res = await fetch('/api/upload', { method: 'POST', body: formData });
+    const upData = await res.json();
+    if (!res.ok) throw new Error(upData.error || 'Gagal upload file');
+    return upData.publicUrl;
   };
 
   const handleBatchMint = async () => {
@@ -116,6 +121,27 @@ export default function BatchMintPage() {
     if (!confirm(`Mint ${pending.length} anakan ke Blockchain? Proses ini tidak dapat dibatalkan.`)) return;
 
     setMinting(true);
+
+    // [BARU] Otomatis mendaftarkan dompet (Lazy Granting)
+    try {
+      const grantRes = await fetch('/api/web3/grant-role', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ walletAddress: account })
+      });
+      const grantData = await grantRes.json();
+      if (!grantRes.ok) {
+        throw new Error(grantData.error || 'Gagal memberikan izin Minting');
+      }
+      if (grantData.granted) {
+        toast.success("Dompet berhasil didaftarkan sebagai Minter!");
+      }
+    } catch (err: any) {
+      toast.error(err.message);
+      setMinting(false);
+      return;
+    }
+
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
     const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
@@ -224,8 +250,8 @@ export default function BatchMintPage() {
         {/* Wallet Warning */}
         {!account && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 flex items-center justify-between gap-4">
-            <p className="text-amber-700 text-sm font-medium">⚠️ Hubungkan wallet untuk mulai minting.</p>
-            <button onClick={() => connectWallet(true)} className="px-4 py-2 bg-amber-600 text-white text-sm font-bold rounded-xl hover:bg-amber-700 transition shrink-0">Connect Wallet</button>
+            <p className="text-amber-700 text-sm font-medium">⚠️ Hubungkan wallet untuk mulai mencetak sertifikat.</p>
+            <button onClick={() => connectWallet()} className="px-4 py-2 bg-amber-600 text-white text-sm font-bold rounded-xl hover:bg-amber-700 transition shrink-0">Connect Wallet</button>
           </div>
         )}
 

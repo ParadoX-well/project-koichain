@@ -58,7 +58,26 @@ export default function ProfileSetting() {
   const [savingStore, setSavingStore] = useState(false);
   const [userWallets, setUserWallets] = useState<any[]>([]);
 
-  const roleConf = ROLE_CONFIG[profile.role] || ROLE_CONFIG.user;
+  const userUpdateProfile = async (updates: any) => {
+    const res = await fetch('/api/user/profile/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ updates })
+    });
+    const data = await res.json();
+    if (!res.ok) return { error: new Error(data.error || 'Terjadi kesalahan') };
+    return { error: null };
+  };
+
+  let roleConf = ROLE_CONFIG.user;
+  const rawRole = profile.role || '';
+  if (rawRole === 'admin') roleConf = ROLE_CONFIG.admin;
+  else if (rawRole === 'author') roleConf = ROLE_CONFIG.author;
+  else if (rawRole.includes('breeder') && rawRole.includes('seller')) {
+    roleConf = { label: 'Seller & Breeder', color: 'text-indigo-700', bg: 'bg-indigo-100 border-indigo-200', gradient: 'from-blue-500 to-purple-600' };
+  }
+  else if (rawRole.includes('breeder')) roleConf = ROLE_CONFIG.breeder;
+  else if (rawRole.includes('seller')) roleConf = ROLE_CONFIG.seller;
 
   const { user: authUser, loading: authLoading } = useRequireAuth();
 
@@ -72,10 +91,10 @@ export default function ProfileSetting() {
         let currentPhone = p.phone;
         if (!currentPhone && authUser.user_metadata?.phone) {
           currentPhone = authUser.user_metadata.phone;
-          supabase.from('profiles').update({ phone: currentPhone }).eq('id', authUser.id).then();
+          userUpdateProfile({ phone: currentPhone }).then();
         }
 
-        const isPartner = ['breeder', 'seller', 'admin', 'author'].includes(p.role);
+        const isPartner = p.role?.includes('breeder') || p.role?.includes('seller') || p.role === 'admin' || p.role === 'author';
         const data = {
           fullName: p.full_name || '',
           email: authUser.email || '',
@@ -120,10 +139,18 @@ export default function ProfileSetting() {
     try {
       const ext = file.name.split('.').pop();
       const fileName = `avatar-${userId}-${Date.now()}.${ext}`;
-      const { error: uploadErr } = await supabase.storage.from('avatars').upload(fileName, file, { upsert: true });
-      if (uploadErr) throw uploadErr;
-      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
-      await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', userId);
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('bucket', 'avatars');
+      formData.append('fileName', fileName);
+
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal upload avatar');
+      
+      const publicUrl = data.publicUrl;
+      await userUpdateProfile({ avatar_url: publicUrl });
       setProfile(prev => ({ ...prev, avatarUrl: publicUrl }));
       toast.success('Foto profil diperbarui!', { id: toastId });
     } catch (err: any) {
@@ -148,13 +175,19 @@ export default function ProfileSetting() {
     try {
       const ext = file.name.split('.').pop();
       const fileName = `banner-${userId}-${Date.now()}.${ext}`;
-      // menggunakan bucket avatars (atau public) krn ini jg aset publik profil
-      const { error: uploadErr } = await supabase.storage.from('avatars').upload(fileName, file, { upsert: true });
-      if (uploadErr) throw uploadErr;
       
-      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('bucket', 'avatars');
+      formData.append('fileName', fileName);
+
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal upload banner');
       
-      const { error: dbErr } = await supabase.from('profiles').update({ banner_url: publicUrl }).eq('id', userId);
+      const publicUrl = data.publicUrl;
+      
+      const { error: dbErr } = await userUpdateProfile({ banner_url: publicUrl });
       if (dbErr) {
         // jika gagal krn kolom blm ada, kasih error jelas
         throw new Error("Gagal simpan ke DB. Pastikan kolom banner_url sudah ada. Error: " + dbErr.message);
@@ -173,13 +206,13 @@ export default function ProfileSetting() {
     e.preventDefault();
     setSaving(true);
     try {
-      // 1. Update profiles table
-      const { error } = await supabase.from('profiles').update({
+      // 1. Update profiles table via API
+      const { error } = await userUpdateProfile({
         full_name: draft.fullName,
         phone: draft.phone,
         address: draft.address,
         updated_at: new Date(),
-      }).eq('id', userId);
+      });
       if (error) throw error;
 
       // 2. Sync Display Name ke Supabase Auth user_metadata
@@ -201,7 +234,7 @@ export default function ProfileSetting() {
     e.preventDefault();
     setSavingStore(true);
     try {
-      const { error } = await supabase.from('profiles').update({
+      const { error } = await userUpdateProfile({
         store_name: storeDraft.storeName,
         store_address: storeDraft.storeAddress,
         contact_phone: storeDraft.contactPhone,
@@ -209,7 +242,7 @@ export default function ProfileSetting() {
         store_description: storeDraft.storeDescription,
         instagram: storeDraft.instagram,
         updated_at: new Date(),
-      }).eq('id', userId);
+      });
       if (error) throw error;
 
       setProfile(prev => ({ ...prev, ...storeDraft }));

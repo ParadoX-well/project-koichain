@@ -37,11 +37,14 @@ export default function ReportPage() {
     const fileExt = file.name.split('.').pop();
     const fileName = `proof-${Date.now()}.${fileExt}`;
     
-    const { error } = await supabase.storage.from('report-proofs').upload(fileName, file);
-    if (error) throw error;
-    
-    const { data } = supabase.storage.from('report-proofs').getPublicUrl(fileName);
-    return data.publicUrl;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('bucket', 'report-proofs');
+    formData.append('fileName', fileName);
+    const res = await fetch('/api/upload', { method: 'POST', body: formData });
+    const upData = await res.json();
+    if (!res.ok) throw new Error(upData.error || 'Gagal upload bukti');
+    return upData.publicUrl;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

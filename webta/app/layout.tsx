@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   description: "Platform sertifikasi ikan koi berbasis blockchain",
 };
 
+import { Providers } from "./Providers";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -20,12 +22,14 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body className={inter.className}>
-        <WalletProvider>
-          <Toaster position="top-center" />
-          {/* Modal konflik wallet — muncul otomatis dari WalletContext */}
-          <WalletConflictModal />
-          {children}
-        </WalletProvider>
+        <Providers>
+          <WalletProvider>
+            <Toaster position="top-center" />
+            {/* Modal konflik wallet — muncul otomatis dari WalletContext */}
+            <WalletConflictModal />
+            {children}
+          </WalletProvider>
+        </Providers>
       </body>
     </html>
   );

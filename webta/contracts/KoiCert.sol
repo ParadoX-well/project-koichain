@@ -1,8 +1,16 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.24;
 
-contract KoiCert {
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+
+contract KoiCert is Initializable, UUPSUpgradeable, AccessControlUpgradeable {
     
+    // Peran (Roles)
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
+
     struct History {
         address owner;
         string ownerName; 
@@ -28,7 +36,7 @@ contract KoiCert {
         address issuer;
         address currentOwner;
         
-        // --- FITUR BARU: SILSILAH (LINEAGE) ---
+        // --- FITUR SILSILAH (LINEAGE) ---
         string fatherId; // ID Koi Bapak (Optional)
         string motherId; // ID Koi Ibu (Optional)
     }
@@ -40,7 +48,22 @@ contract KoiCert {
     event OwnershipTransferred(string indexed id, address indexed from, address indexed to);
     event KoiUpdated(string indexed id, uint256 newSize, string newNote, address indexed updatedBy);
 
-    // 1. MINTING (Tambah Parameter Father & Mother)
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(address defaultAdmin) initializer public {
+        __AccessControl_init();
+
+        _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
+        _grantRole(MINTER_ROLE, defaultAdmin);
+        _grantRole(UPGRADER_ROLE, defaultAdmin);
+    }
+
+    function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) {}
+
+    // 1. MINTING (Dibatasi hanya untuk MINTER_ROLE)
     function mintCertificate(
         string memory _id,
         string memory _variety,
@@ -52,15 +75,12 @@ contract KoiCert {
         string memory _photoUrl,
         string memory _certUrl,
         string memory _contestUrl,
-        string memory _fatherId, // Input ID Bapak
-        string memory _motherId, // Input ID Ibu
-        string memory _note      // Input Catatan Awal
-    ) public {
+        string memory _fatherId, 
+        string memory _motherId, 
+        string memory _note      
+    ) public onlyRole(MINTER_ROLE) {
         require(bytes(koiRegistry[_id].id).length == 0, "ID Koi sudah terdaftar!");
 
-        string[] memory emptyCerts;
-        string[] memory emptyContests;
-        
         KoiData storage newKoi = koiRegistry[_id];
         newKoi.id = _id;
         newKoi.variety = _variety;
@@ -74,7 +94,6 @@ contract KoiCert {
         newKoi.issuer = msg.sender;
         newKoi.currentOwner = msg.sender;
         
-        // Simpan Data Orang Tua
         newKoi.fatherId = _fatherId;
         newKoi.motherId = _motherId;
 
@@ -109,14 +128,13 @@ contract KoiCert {
         string memory _newPhotoUrl,  
         string memory _note          
     ) public {
-        require(msg.sender == koiRegistry[_id].currentOwner, "Akses Ditolak!");
+        require(msg.sender == koiRegistry[_id].currentOwner || hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Akses Ditolak!");
         require(_newOwner != address(0), "Alamat tidak valid");
 
         KoiData storage koi = koiRegistry[_id];
         address oldOwner = koi.currentOwner;
 
         koi.currentOwner = _newOwner;
-        // CATATAN: koi.breeder TIDAK diubah agar tetap menyimpan nama peternak asal (immutable)
 
         if (_newSize > 0) koi.size = _newSize;
         if (bytes(_newAge).length > 0) koi.age = _newAge;
@@ -147,13 +165,13 @@ contract KoiCert {
         string memory _newContestUrl,
         string memory _updateNote
     ) public {
-        require(msg.sender == koiRegistry[_id].currentOwner, "Akses Ditolak!");
+        require(msg.sender == koiRegistry[_id].currentOwner || hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Akses Ditolak!");
 
         KoiData storage koi = koiRegistry[_id];
         
-        koi.size = _newSize;
-        koi.age = _newAge;
-        koi.condition = _newCondition;
+        if (_newSize > 0) koi.size = _newSize;
+        if (bytes(_newAge).length > 0) koi.age = _newAge;
+        if (bytes(_newCondition).length > 0) koi.condition = _newCondition;
         
         if (bytes(_newPhotoUrl).length > 0) {
             koi.photoUrl = _newPhotoUrl;
@@ -171,11 +189,11 @@ contract KoiCert {
             timestamp: block.timestamp,
             note: _updateNote,
             photoUrl: koi.photoUrl,
-            size: _newSize,
-            age: _newAge
+            size: _newSize > 0 ? _newSize : koi.size,
+            age: bytes(_newAge).length > 0 ? _newAge : koi.age
         }));
 
-        emit KoiUpdated(_id, _newSize, _updateNote, msg.sender);
+        emit KoiUpdated(_id, _newSize > 0 ? _newSize : koi.size, _updateNote, msg.sender);
     }
 
     function getKoi(string memory _id) public view returns (KoiData memory) {

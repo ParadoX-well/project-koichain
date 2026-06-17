@@ -118,14 +118,17 @@ export default function EditNewsPage() {
         setUploadingInlineImage(true);
         const ext = file.name.split('.').pop();
         const fileName = `inline-${Date.now()}.${ext}`;
-        const { error } = await supabase.storage
-            .from('news_images')
-            .upload(fileName, file, { upsert: true });
-        if (error) {
-            toast.error(`Gagal upload: ${error.message}`);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('bucket', 'news_images');
+        formData.append('fileName', fileName);
+        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+        const data = await res.json();
+        
+        if (!res.ok) {
+            toast.error(`Gagal upload: ${data.error}`);
         } else {
-            const { data: urlData } = supabase.storage.from('news_images').getPublicUrl(fileName);
-            setInsertImageUrl(urlData.publicUrl);
+            setInsertImageUrl(data.publicUrl);
             toast.success('Gambar berhasil diupload!');
         }
         setUploadingInlineImage(false);
@@ -165,7 +168,11 @@ export default function EditNewsPage() {
                 if (oldImageUrl) {
                     const oldFileName = oldImageUrl.split('/').pop();
                     if (oldFileName) {
-                        await supabase.storage.from('news_images').remove([oldFileName]);
+                        await fetch('/api/upload', {
+                            method: 'DELETE',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ bucket: 'news_images', fileNames: [oldFileName] })
+                        });
                     }
                 }
 
@@ -173,21 +180,21 @@ export default function EditNewsPage() {
                 const ext = imageFile.name.split('.').pop();
                 const fileName = `${Date.now()}-${slug}.${ext}`;
 
-                const { error: uploadError } = await supabase.storage
-                    .from('news_images')
-                    .upload(fileName, imageFile, { upsert: true });
+                const formData = new FormData();
+                formData.append('file', imageFile);
+                formData.append('bucket', 'news_images');
+                formData.append('fileName', fileName);
+                
+                const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                const data = await res.json();
 
-                if (uploadError) {
-                    toast.error(`Gagal upload gambar: ${uploadError.message}`);
+                if (!res.ok) {
+                    toast.error(`Gagal upload gambar: ${data.error}`);
                     setSubmitting(false);
                     return;
                 }
 
-                const { data: urlData } = supabase.storage
-                    .from('news_images')
-                    .getPublicUrl(fileName);
-
-                imageUrl = urlData.publicUrl;
+                imageUrl = data.publicUrl;
             }
 
             // Kasus 2: Gambar dihapus tanpa diganti
@@ -195,7 +202,11 @@ export default function EditNewsPage() {
                 if (oldImageUrl) {
                     const oldFileName = oldImageUrl.split('/').pop();
                     if (oldFileName) {
-                        await supabase.storage.from('news_images').remove([oldFileName]);
+                        await fetch('/api/upload', {
+                            method: 'DELETE',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ bucket: 'news_images', fileNames: [oldFileName] })
+                        });
                     }
                 }
                 imageUrl = null;

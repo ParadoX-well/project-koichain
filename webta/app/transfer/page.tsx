@@ -25,6 +25,21 @@ export default function TransferKoiPage() {
   const [isBanned, setIsBanned] = useState(false);
   const [showWalletGate, setShowWalletGate] = useState(false);
 
+  const userUpdateProfile = async (updates: any) => {
+    try {
+      const res = await fetch('/api/user/profile/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updates })
+      });
+      const data = await res.json();
+      if (!res.ok) return { error: new Error(data.error || 'Terjadi kesalahan') };
+      return { error: null };
+    } catch (err: any) {
+      return { error: err };
+    }
+  };
+
   const [targetId, setTargetId] = useState('');
   const [koiData, setKoiData] = useState<any>(null);
   const [ownerName, setOwnerName] = useState<string>('Unknown');
@@ -144,10 +159,14 @@ export default function TransferKoiPage() {
   const uploadPhoto = async () => {
       if (!photoFile) return "";
       const fileName = `transfer/${Date.now()}-${photoFile.name}`;
-      const { error } = await supabase.storage.from('koi-assets').upload(fileName, photoFile);
-      if (error) throw error;
-      const { data } = supabase.storage.from('koi-assets').getPublicUrl(fileName);
-      return data.publicUrl;
+      const formData = new FormData();
+      formData.append('file', photoFile);
+      formData.append('bucket', 'koi-assets');
+      formData.append('fileName', fileName);
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const upData = await res.json();
+      if (!res.ok) throw new Error(upData.error || 'Gagal upload foto ikan');
+      return upData.publicUrl;
   };
 
     const handleResolveOwner = async () => {
@@ -304,7 +323,7 @@ export default function TransferKoiPage() {
                 if (authUser?.id) {
                     const { data: prof } = await supabase.from('profiles').select('total_transfers').eq('id', authUser.id).single();
                     if (prof) {
-                        await supabase.from('profiles').update({ total_transfers: (prof.total_transfers || 0) + 1 }).eq('id', authUser.id);
+                        await userUpdateProfile({ total_transfers: (prof.total_transfers || 0) + 1 });
                     }
                 }
             } catch (e) {

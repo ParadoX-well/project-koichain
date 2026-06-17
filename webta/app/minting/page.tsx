@@ -110,21 +110,29 @@ export default function MintKoiPage() {
     const fileExt = file.name.split('.').pop();
     const fileName = `${folder}/${Date.now()}-${Math.random()}.${fileExt}`;
 
-    const { error } = await supabase.storage.from('koi-assets').upload(fileName, file);
-    if (error) throw error;
-
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('bucket', 'koi-assets');
+    formData.append('fileName', fileName);
+    const res = await fetch('/api/upload', { method: 'POST', body: formData });
+    const upData = await res.json();
+    if (!res.ok) throw new Error(upData.error || 'Gagal upload file');
+    
     // Simpan path file agar bisa dihapus nanti jika gagal
     setUploadedPaths(prev => [...prev, fileName]);
-
-    const { data } = supabase.storage.from('koi-assets').getPublicUrl(fileName);
-    return data.publicUrl;
+    
+    return upData.publicUrl;
   };
 
   // FUNGSI ROLLBACK (HAPUS FILE JIKA GAGAL)
   const rollbackFiles = async () => {
     if (uploadedPaths.length > 0) {
       console.log("Melakukan Rollback File...", uploadedPaths);
-      await supabase.storage.from('koi-assets').remove(uploadedPaths);
+        await fetch('/api/upload', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bucket: 'koi-assets', fileNames: uploadedPaths })
+        });
       setUploadedPaths([]); // Reset
     }
   };
@@ -177,6 +185,27 @@ export default function MintKoiPage() {
 
       const certUrl = files.cert ? await uploadToStorage(files.cert, 'certs') : "";
       const contestUrl = files.contest ? await uploadToStorage(files.contest, 'contests') : "";
+
+      // [BARU] Otomatis mendaftarkan dompet (Lazy Granting)
+      toast.loading("Memeriksa & Mendaftarkan Dompet...", { id: toastId });
+      try {
+        const grantRes = await fetch('/api/web3/grant-role', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ walletAddress: account })
+        });
+        const grantData = await grantRes.json();
+        if (!grantRes.ok) {
+          throw new Error(grantData.error || 'Gagal memberikan izin Minting');
+        }
+        if (grantData.granted) {
+          toast.success("Dompet berhasil didaftarkan sebagai Minter!", { id: toastId });
+        }
+      } catch (err: any) {
+        toast.error(err.message, { id: toastId });
+        setProcessLoading(false);
+        return;
+      }
 
       // B. Koneksi ke Blockchain
       toast.loading("Menghubungkan ke Smart Contract...", { id: toastId });

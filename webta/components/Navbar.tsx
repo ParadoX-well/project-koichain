@@ -6,6 +6,7 @@ import { User, ShieldCheck, Wallet, XCircle, LayoutDashboard, LogOut, ChevronDow
 import { supabase } from "@/lib/supabase";
 import { useWallet } from '@/context/WalletContext';
 import { useRouter } from 'next/navigation';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 export default function Navbar() {
     const [user, setUser] = useState<any>(null);
@@ -130,12 +131,7 @@ export default function Navbar() {
         await supabase.from('notifications').delete().eq('user_id', user.id);
     };
 
-    const shortenAddress = (addr: string) => {
-        return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-    }
-
-    const handleConnect = () => connectWallet(true);  // forceNew=true → MetaMask selalu tampil
-    const handleReconnect = () => connectWallet(true);
+    // RainbowKit otomatis menghandle connect/disconnect, jadi fungsi manual dibuang
 
     const handleLogout = async () => {
         setIsDropdownOpen(false);
@@ -148,7 +144,16 @@ export default function Navbar() {
         <nav className="w-full bg-white/85 backdrop-blur-md border-b border-gray-200/50 px-3 sm:px-6 py-3 sm:py-4 flex justify-between items-center sticky top-0 z-50 shadow-sm transition-all duration-300">
 
             {/* LOGO & BRAND */}
-            <Link href="/" className="flex items-center gap-2.5 group">
+            <Link 
+                href="/" 
+                onClick={(e) => {
+                    if (window.location.pathname === '/') {
+                        e.preventDefault();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                }}
+                className="flex items-center gap-2.5 group"
+            >
                 {/* LOGO DENGAN AURA GLOW SAAT HOVER */}
                 <div className="relative">
                     <div className="absolute inset-0 bg-orange-500 rounded-full blur-md opacity-0 group-hover:opacity-40 transition-opacity duration-500"></div>
@@ -164,44 +169,14 @@ export default function Navbar() {
                 </span>
             </Link>
 
-            {/* DESKTOP NAV LINKS */}
+            {/* DESKTOP NAV LINKS (DIHAPUS AGAR MINIMALIS) */}
             <div className="hidden md:flex items-center gap-6 text-sm font-bold text-gray-600">
-                <Link href="/" className="hover:text-orange-600 transition">Beranda</Link>
-                <Link href="/check" className="hover:text-orange-600 transition">Cek Sertifikat</Link>
-                <Link href="/report" className="hover:text-orange-600 transition">Lapor Bug</Link>
             </div>
 
             <div className="flex items-center gap-2 sm:gap-4">
 
-                {/* --- WALLET --- */}
-                {account ? (
-                    <div className="flex items-center gap-1">
-                        <button
-                            onClick={disconnectWallet}
-                            className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-900 text-white text-sm font-bold rounded-lg hover:bg-gray-800 transition shadow-md border border-gray-700 group"
-                            title="Klik untuk Disconnect"
-                        >
-                            <Wallet className="w-4 h-4 text-green-400" />
-                            <span className="font-mono hidden sm:inline">{shortenAddress(account)}</span>
-                            <XCircle className="w-4 h-4 text-gray-400 group-hover:text-red-400 transition sm:ml-1" />
-                        </button>
-                        <button
-                            onClick={handleReconnect}
-                            className="p-2 text-gray-400 hover:text-gray-700 transition"
-                            title="Ganti Wallet"
-                        >
-                            <RefreshCw size={14} />
-                        </button>
-                    </div>
-                ) : (
-                    <button
-                        onClick={handleConnect}
-                        className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white text-gray-900 border-2 border-gray-900 text-sm font-bold rounded-lg hover:bg-gray-50 transition shadow-sm"
-                    >
-                        <Wallet className="w-4 h-4" />
-                        <span className="hidden sm:inline">Connect Wallet</span>
-                    </button>
-                )}
+                {/* --- WALLET (RAINBOWKIT) --- */}
+                <ConnectButton />
 
                 <div className="h-6 w-px bg-gray-300 mx-1 hidden md:block"></div>
 
@@ -376,12 +351,10 @@ export default function Navbar() {
                 </button>
             </div>
 
-            {/* MOBILE MENU DROPDOWN */}
+            {/* MOBILE MENU DROPDOWN (DIHAPUS AGAR MINIMALIS) */}
             {isMobileMenuOpen && (
                 <div className="absolute top-full left-0 w-full bg-white border-b border-gray-200 shadow-xl md:hidden flex flex-col py-4 px-6 gap-4 z-40">
-                    <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-800 font-bold hover:text-orange-600">Beranda</Link>
-                    <Link href="/check" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-800 font-bold hover:text-orange-600">Cek Sertifikat</Link>
-                    <Link href="/report" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-800 font-bold hover:text-orange-600">Lapor Bug</Link>
+                    <p className="text-gray-500 text-sm text-center italic">Menu navigasi berada di Dashboard masing-masing</p>
                 </div>
             )}
         </nav>

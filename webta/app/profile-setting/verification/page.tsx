@@ -97,10 +97,32 @@ function VerificationContent() {
     const uploadDocument = async (file: File, prefix: string, bucket: string = 'ktp-documents') => {
         const fileExt = file.name.split('.').pop();
         const fileName = `${prefix}-${user.id}-${Date.now()}.${fileExt}`;
-        const { error } = await supabase.storage.from(bucket).upload(fileName, file);
-        if (error) throw error;
-        const { data } = supabase.storage.from(bucket).getPublicUrl(fileName);
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('bucket', bucket);
+        formData.append('fileName', fileName);
+
+        const res = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Gagal mengunggah dokumen');
+        
         return data.publicUrl;
+    };
+
+    const userUpdateProfile = async (updates: any) => {
+        const res = await fetch('/api/user/profile/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ updates })
+        });
+        const data = await res.json();
+        if (!res.ok) return { error: new Error(data.error || 'Terjadi kesalahan') };
+        return { error: null };
     };
 
     // Submit Form
@@ -110,10 +132,12 @@ function VerificationContent() {
             toast.error("Mohon lengkapi Data Pemilik, Data Usaha, dan Kontak!");
             return;
         }
-        // KTP Wajib jika belum ada di database
-        if ((!profile.ktp_url && !ktpFile) || (!profile.ktp_selfie_url && !ktpSelfieFile) || (!profile.farm_photo_url && !farmPhotoFile)) {
-            toast.error("Wajib mengunggah semua dokumen (KTP, Selfie, dan Foto Bisnis)!");
-            return;
+        // KTP Wajib diunggah setiap kali mengajukan kemitraan baru
+        if (profile.role !== 'admin') {
+            if (!ktpFile || !ktpSelfieFile || !farmPhotoFile) {
+                toast.error("Wajib mengunggah semua dokumen (KTP, Selfie, dan Foto Bisnis)!");
+                return;
+            }
         }
 
         setSubmitting(true);
@@ -157,7 +181,7 @@ function VerificationContent() {
                 updates.requested_role = selectedRole;
             }
 
-            const { error } = await supabase.from('profiles').update(updates).eq('id', user.id);
+            const { error } = await userUpdateProfile(updates);
 
             if (error) throw error;
 
@@ -175,9 +199,12 @@ function VerificationContent() {
     const handleCancelRequest = async () => {
         if (!confirm("Yakin ingin membatalkan pengajuan?")) return;
         setCanceling(true);
-        const { error } = await supabase.from('profiles').update({
-            requested_role: null
-        }).eq('id', user.id);
+        const { error } = await userUpdateProfile({
+            requested_role: null,
+            ktp_url: null,
+            ktp_selfie_url: null,
+            farm_photo_url: null
+        });
 
         if (!error) {
             toast.success("Dibatalkan.");
@@ -475,10 +502,10 @@ function VerificationContent() {
                                 <div className="grid md:grid-cols-3 gap-6">
                                     {/* KTP */}
                                     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-[1.5rem] border border-blue-100/50 flex flex-col h-full">
-                                        <label className="block text-sm font-bold text-blue-900 mb-2">1. Foto KTP Asli {profile.ktp_url ? "(Tersimpan)" : <span className="text-red-500">*</span>}</label>
+                                        <label className="block text-sm font-bold text-blue-900 mb-2">1. Foto KTP Asli {profile.role === 'admin' && profile.ktp_url ? "(Tersimpan)" : <span className="text-red-500">*</span>}</label>
                                         <p className="text-xs text-blue-700 mb-4">Pastikan tulisan terbaca jelas dan tidak terpotong.</p>
                                         <div className="mt-auto border-2 border-dashed border-blue-300 bg-white/60 rounded-xl p-4 text-center relative hover:bg-white transition group cursor-pointer shadow-sm">
-                                            <input required={!profile.ktp_url} type="file" accept="image/*" onChange={(e) => setKtpFile(e.target.files?.[0] || null)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                                            <input required={profile.role !== 'admin'} type="file" accept="image/*" onChange={(e) => setKtpFile(e.target.files?.[0] || null)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
                                             <Upload className="w-6 h-6 text-blue-500 mx-auto mb-2" />
                                             <span className="text-xs font-bold text-gray-700 block">
                                                 {ktpFile ? <span className="text-green-600">✅ {ktpFile.name}</span> : "Upload KTP"}
@@ -488,10 +515,10 @@ function VerificationContent() {
 
                                     {/* SELFIE KTP */}
                                     <div className="bg-gradient-to-r from-purple-50 to-fuchsia-50 p-6 rounded-[1.5rem] border border-purple-100/50 flex flex-col h-full">
-                                        <label className="block text-sm font-bold text-purple-900 mb-2">2. Selfie Pegang KTP {profile.ktp_selfie_url ? "(Tersimpan)" : <span className="text-red-500">*</span>}</label>
+                                        <label className="block text-sm font-bold text-purple-900 mb-2">2. Selfie Pegang KTP {profile.role === 'admin' && profile.ktp_selfie_url ? "(Tersimpan)" : <span className="text-red-500">*</span>}</label>
                                         <p className="text-xs text-purple-700 mb-4">Wajah Anda dan KTP harus terlihat jelas dalam 1 frame.</p>
                                         <div className="mt-auto border-2 border-dashed border-purple-300 bg-white/60 rounded-xl p-4 text-center relative hover:bg-white transition group cursor-pointer shadow-sm">
-                                            <input required={!profile.ktp_selfie_url} type="file" accept="image/*" onChange={(e) => setKtpSelfieFile(e.target.files?.[0] || null)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                                            <input required={profile.role !== 'admin'} type="file" accept="image/*" onChange={(e) => setKtpSelfieFile(e.target.files?.[0] || null)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
                                             <Upload className="w-6 h-6 text-purple-500 mx-auto mb-2" />
                                             <span className="text-xs font-bold text-gray-700 block">
                                                 {ktpSelfieFile ? <span className="text-green-600">✅ {ktpSelfieFile.name}</span> : "Upload Selfie KTP"}
@@ -501,10 +528,10 @@ function VerificationContent() {
 
                                     {/* FOTO FARM */}
                                     <div className="bg-gradient-to-r from-orange-50 to-yellow-50 p-6 rounded-[1.5rem] border border-orange-100/50 flex flex-col h-full">
-                                        <label className="block text-sm font-bold text-orange-900 mb-2">3. Foto Bisnis/Kolam {profile.farm_photo_url ? "(Tersimpan)" : <span className="text-red-500">*</span>}</label>
+                                        <label className="block text-sm font-bold text-orange-900 mb-2">3. Foto Bisnis/Kolam {profile.role === 'admin' && profile.farm_photo_url ? "(Tersimpan)" : <span className="text-red-500">*</span>}</label>
                                         <p className="text-xs text-orange-700 mb-4">Bukti fisik operasional bisnis (Kolam / Toko).</p>
                                         <div className="mt-auto border-2 border-dashed border-orange-300 bg-white/60 rounded-xl p-4 text-center relative hover:bg-white transition group cursor-pointer shadow-sm">
-                                            <input required={!profile.farm_photo_url} type="file" accept="image/*" onChange={(e) => setFarmPhotoFile(e.target.files?.[0] || null)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                                            <input required={profile.role !== 'admin'} type="file" accept="image/*" onChange={(e) => setFarmPhotoFile(e.target.files?.[0] || null)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
                                             <Upload className="w-6 h-6 text-orange-500 mx-auto mb-2" />
                                             <span className="text-xs font-bold text-gray-700 block">
                                                 {farmPhotoFile ? <span className="text-green-600">✅ {farmPhotoFile.name}</span> : "Upload Foto Lokasi"}
